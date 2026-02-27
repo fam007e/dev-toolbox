@@ -1,60 +1,51 @@
 # Contributing to Dev-Toolbox
 
-We welcome contributions to the Dev-Toolbox! This guide will help you get started with adding new tools to the application.
+We welcome contributions to the Dev-Toolbox! This guide will help you get started with adding new tools or improving existing ones.
 
 ## Getting Started
 
-1. **Fork the repository:**
+1. **Fork the repository** on GitHub.
+2. **Clone your fork** locally.
+3. **Create a new branch** for your feature or bugfix.
 
-   Fork the `dev-toolbox` repository to your own GitHub account.
+## Development Environment
 
-2. **Clone your fork:**
-
-   ```
-   git clone https://github.com/your-username/dev-toolbox.git
-   ```
-
-3. **Create a new branch:**
-
-   ```
-   git checkout -b my-new-tool
-   ```
+- **Rust:** Ensure you have the latest stable Rust version installed.
+- **SQLite:** The project uses `rusqlite` with the `bundled` feature, but you may need `libsqlite3-dev` on Linux for CI consistency.
+- **Format & Lint:**
+  - Run `cargo fmt` to format code.
+  - Run `cargo clippy -- -D warnings` to check for common mistakes.
 
 ## Creating a New Tool
 
-To add a new tool, you need to create a new Rust module and implement the `Tool` trait.
+All tools must implement the `async_trait` version of the `Tool` trait.
 
-1. **Create a new file:**
+1. **Implement the Trait:**
+   ```rust
+   #[async_trait]
+   impl Tool for MyTool {
+       fn name(&self) -> &'static str { "My Tool" }
+       fn render(&self, f: &mut Frame, area: Rect) { ... }
+       async fn handle_input(&mut self, key: KeyEvent) -> Result<String, Box<dyn Error>> { ... }
+       fn save_cache(&self) -> Result<(), Box<dyn Error>> { ... }
+   }
+   ```
+2. **Configuration:** Use the `Config` struct to avoid hardcoding paths.
+3. **Lazy Loading:** If your tool requires heavy data loading, use `tokio::spawn` to load data in the background and show a loading state in `render`.
 
-   Create a new file for your tool in the `src/tools` directory (e.g., `src/tools/my_tool.rs`).
+## CI Pipeline
 
-2. **Implement the `Tool` trait:**
+Every Pull Request triggers a CI pipeline that runs:
+- `cargo build`
+- `cargo test`
+- `cargo fmt --check`
+- `cargo clippy`
+- Spellcheck (`typos`)
 
-   Your new tool must implement the `Tool` trait, which has the following methods:
-
-   - `name(&self) -> &str`: Returns the name of the tool, which will be displayed in the tab.
-   - `render(&self, f: &mut Frame, area: Rect)`: Renders the tool's UI.
-   - `handle_input(&mut self, key: KeyEvent) -> Result<String, Box<dyn std::error::Error>>`: Handles user input for the tool.
-   - `save_cache(&self) -> Result<(), Box<dyn std::error::Error>>`: Saves any cached data for the tool.
-
-3. **Add your tool to `src/app.rs`:**
-
-   In `src/app.rs`, add your new tool to the `tools` vector in the `App::new` function.
+Please ensure all checks pass before requesting a review.
 
 ## Submitting Your Contribution
 
-1. **Commit your changes:**
-
-   ```
-   git commit -m "Add my new tool"
-   ```
-
-2. **Push to your fork:**
-
-   ```
-   git push origin my-new-tool
-   ```
-
-3. **Create a pull request:**
-
-   Open a pull request from your fork to the `main` branch of the `fam007e/dev-toolbox` repository.
+1. **Commit your changes** with a clear and descriptive message.
+2. **Push to your fork.**
+3. **Create a Pull Request** against the `main` branch.

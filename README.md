@@ -71,3 +71,10 @@ A modular and extensible CLI toolbox for developers, built with Rust. This appli
 
 - **Mouse / Touchpad:**
   - **Click / Tap:** Select a tab to switch to that tool.
+
+## Project Maintenance
+
+- **CI/CD:** Automated builds, tests, and linting are performed on every PR via GitHub Actions.
+- **Standards:** We adhere to strict Rust coding standards (Clippy) and have a comprehensive [Code of Conduct](CODE_OF_CONDUCT.md).
+- **Security:** Our security protocols are detailed in [SECURITY.md](SECURITY.md).
+- **Contributing:** See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add new tools.
