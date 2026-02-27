@@ -1,17 +1,16 @@
-name: Discord Webhook Notification
+name: Discord Notification
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    types: [opened, closed, reopened]
+    branches: [main]
   pull_request_review:
-    types: [submitted, edited, dismissed]
+    types: [submitted]
   issues:
     types: [opened, closed, reopened]
   release:
-    types: [published, edited, released]
+    types: [published]
   check_run:
     types: [completed]
   check_suite:
@@ -20,18 +19,20 @@ on:
   deployment_status:
 
 jobs:
-  notify:
+  discord_notification:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
-      - name: Check if Discord webhook URL is set
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
+      - name: Debug Event
         run: |
-          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
-            echo "Error: DISCORD_WEBHOOK_URL secret is not set"
-            exit 1
+          echo "Event Name: ${{ github.event_name }}"
+          if [ "${{ github.event_name }}" == "push" ]; then
+            echo "Push Commit: ${{ github.event.head_commit.url }}"
           fi
 
       - name: Send notification to Discord for Push
@@ -46,12 +47,12 @@ jobs:
         run: |
           CONTENT="🚀 **Push Event** in `$REPOSITORY` by **$ACTOR**
 
-Branch: `$REF_NAME`
-Commit: [`$SHA`]($COMMIT_URL)"
+          Branch: `$REF_NAME`
+          Commit: [`$SHA`]($COMMIT_URL)"
           PAYLOAD=$(jq -n --arg content "$CONTENT" '{"content": $content}')
-          curl -X POST 
-               -H "Content-Type: application/json" 
-               -d "$PAYLOAD" 
+          curl -X POST \
+               -H "Content-Type: application/json" \
+               -d "$PAYLOAD" \
                "$DISCORD_WEBHOOK_URL"
 
       - name: Send notification to Discord for Pull Request
@@ -67,11 +68,11 @@ Commit: [`$SHA`]($COMMIT_URL)"
         run: |
           CONTENT="📋 **Pull Request ${ACTION^}** in `$REPOSITORY` by **$ACTOR**
 
-[#$PR_NUMBER: $PR_TITLE]($PR_URL)"
+          [#$PR_NUMBER: $PR_TITLE]($PR_URL)"
           PAYLOAD=$(jq -n --arg content "$CONTENT" '{"content": $content}')
-          curl -X POST 
-               -H "Content-Type: application/json" 
-               -d "$PAYLOAD" 
+          curl -X POST \
+               -H "Content-Type: application/json" \
+               -d "$PAYLOAD" \
                "$DISCORD_WEBHOOK_URL"
 
       - name: Send notification to Discord for Pull Request Review
@@ -87,11 +88,11 @@ Commit: [`$SHA`]($COMMIT_URL)"
         run: |
           CONTENT="👀 **Pull Request Review ${REVIEW_STATE^}** in `$REPOSITORY` by **$ACTOR**
 
-[#$PR_NUMBER: $PR_TITLE]($PR_URL)"
+          [#$PR_NUMBER: $PR_TITLE]($PR_URL)"
           PAYLOAD=$(jq -n --arg content "$CONTENT" '{"content": $content}')
-          curl -X POST 
-               -H "Content-Type: application/json" 
-               -d "$PAYLOAD" 
+          curl -X POST \
+               -H "Content-Type: application/json" \
+               -d "$PAYLOAD" \
                "$DISCORD_WEBHOOK_URL"
 
       - name: Send notification to Discord for Issues
@@ -107,11 +108,11 @@ Commit: [`$SHA`]($COMMIT_URL)"
         run: |
           CONTENT="🐛 **Issue ${ACTION^}** in `$REPOSITORY` by **$ACTOR**
 
-[#$ISSUE_NUMBER: $ISSUE_TITLE]($ISSUE_URL)"
+          [#$ISSUE_NUMBER: $ISSUE_TITLE]($ISSUE_URL)"
           PAYLOAD=$(jq -n --arg content "$CONTENT" '{"content": $content}')
-          curl -X POST 
-               -H "Content-Type: application/json" 
-               -d "$PAYLOAD" 
+          curl -X POST \
+               -H "Content-Type: application/json" \
+               -d "$PAYLOAD" \
                "$DISCORD_WEBHOOK_URL"
 
       - name: Send notification to Discord for Release
@@ -126,11 +127,11 @@ Commit: [`$SHA`]($COMMIT_URL)"
         run: |
           CONTENT="🎉 **Release ${ACTION^}** in `$REPOSITORY`
 
-[$RELEASE_NAME ($RELEASE_TAG)]($RELEASE_URL)"
+          [$RELEASE_NAME ($RELEASE_TAG)]($RELEASE_URL)"
           PAYLOAD=$(jq -n --arg content "$CONTENT" '{"content": $content}')
-          curl -X POST 
-               -H "Content-Type: application/json" 
-               -d "$PAYLOAD" 
+          curl -X POST \
+               -H "Content-Type: application/json" \
+               -d "$PAYLOAD" \
                "$DISCORD_WEBHOOK_URL"
 
       - name: Send notification to Discord for Check Run
@@ -144,13 +145,13 @@ Commit: [`$SHA`]($COMMIT_URL)"
         run: |
           CONTENT="✅ **Check Run Completed** in `$REPOSITORY`
 
-Check: `$CHECK_NAME`
-Status: $CHECK_STATUS
-Result: $CHECK_CONCLUSION"
+          Check: `$CHECK_NAME`
+          Status: $CHECK_STATUS
+          Result: $CHECK_CONCLUSION"
           PAYLOAD=$(jq -n --arg content "$CONTENT" '{"content": $content}')
-          curl -X POST 
-               -H "Content-Type: application/json" 
-               -d "$PAYLOAD" 
+          curl -X POST \
+               -H "Content-Type: application/json" \
+               -d "$PAYLOAD" \
                "$DISCORD_WEBHOOK_URL"
 
       - name: Send notification to Discord for Check Suite
@@ -163,12 +164,12 @@ Result: $CHECK_CONCLUSION"
         run: |
           CONTENT="📊 **Check Suite Completed** in `$REPOSITORY`
 
-Status: $CHECK_STATUS
-Result: $CHECK_CONCLUSION"
+          Status: $CHECK_STATUS
+          Result: $CHECK_CONCLUSION"
           PAYLOAD=$(jq -n --arg content "$CONTENT" '{"content": $content}')
-          curl -X POST 
-               -H "Content-Type: application/json" 
-               -d "$PAYLOAD" 
+          curl -X POST \
+               -H "Content-Type: application/json" \
+               -d "$PAYLOAD" \
                "$DISCORD_WEBHOOK_URL"
 
       - name: Send notification to Discord for Deployment
@@ -182,14 +183,14 @@ Result: $CHECK_CONCLUSION"
           if [ "${{ github.event_name }}" == "deployment_status" ]; then
             CONTENT="🚀 **Deployment Status: ${DEPLOY_STATUS^^}** in `$REPOSITORY`
 
-Environment: `$DEPLOY_ENV`"
+            Environment: `$DEPLOY_ENV`"
           else
             CONTENT="🚀 **Deployment Created** in `$REPOSITORY`
 
-Environment: `$DEPLOY_ENV`"
+            Environment: `$DEPLOY_ENV`"
           fi
           PAYLOAD=$(jq -n --arg content "$CONTENT" '{"content": $content}')
-          curl -X POST 
-               -H "Content-Type: application/json" 
-               -d "$PAYLOAD" 
+          curl -X POST \
+               -H "Content-Type: application/json" \
+               -d "$PAYLOAD" \
                "$DISCORD_WEBHOOK_URL"
