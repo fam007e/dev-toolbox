@@ -10,10 +10,13 @@ A modular and extensible CLI toolbox for developers, built with Rust. This appli
 
 ## Available Tools
 
-- **Org Research:** Get insights into a GitHub organization's public repositories, including language statistics and license information.
-- **Repo Explorer:** Explore the contents of a public GitHub repository, view file details, and see a breakdown of the languages used.
-- **Unicode Inspector:** Look up Unicode characters by their code point and view detailed information about them.
-- **JWT Decoder:** Decode JSON Web Tokens to inspect their header and payload.
+Detailed documentation for each tool can be found in the [Wiki](docs/WIKI.md).
+
+- **[Org Research](docs/org_research.md):** Get insights into a GitHub organization's public repositories, including language statistics and license information.
+- **[Repo Explorer](docs/repo_explorer.md):** Explore the contents of a public GitHub repository, view file details, and see a breakdown of the languages used.
+- **[Unicode Inspector](docs/unicode_inspector.md):** Look up Unicode characters by their code point and view detailed information about them.
+- **[JWT Decoder](docs/jwt_decoder.md):** Decode JSON Web Tokens to inspect their header and payload.
+
 ## Getting Started
 
 ### Prerequisites
@@ -55,19 +58,10 @@ A modular and extensible CLI toolbox for developers, built with Rust. This appli
    ```
 
 ## Navigation
-...
-- **Mouse / Touchpad:**
-  - **Click / Tap:** Select a tab to switch to that tool.
 
-## Contact
-
-For support or reporting issues, contact [email](mailto:faisalmoshiur+devtoolbox@gmail.com).
-
-## Project Maintenance
-
+- **Keyboard:**
   - `Tab`: Switch between tool tabs.
   - **Arrow Keys, Enter, etc.:** Used for interacting with the currently selected tool.
-
 - **Mouse / Touchpad:**
   - **Click / Tap:** Select a tab to switch to that tool.
 
@@ -77,3 +71,7 @@ For support or reporting issues, contact [email](mailto:faisalmoshiur+devtoolbox
 - **Standards:** We adhere to strict Rust coding standards (Clippy) and have a comprehensive [Code of Conduct](CODE_OF_CONDUCT.md).
 - **Security:** Our security protocols are detailed in [SECURITY.md](SECURITY.md).
 - **Contributing:** See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add new tools.
+
+## Contact
+
+For support or reporting issues, contact [email](mailto:faisalmoshiur+devtoolbox@gmail.com).
