@@ -21,6 +21,7 @@ pub struct OrgResearchTool {
     client: Client,
     #[allow(dead_code)]
     secrets: Secrets,
+    loading: bool,
 }
 
 struct InputState {
@@ -30,12 +31,15 @@ struct InputState {
     allow_no_parent: bool,
 }
 
+use secrecy::ExposeSecret;
+use crate::models::github::SearchResponse;
+
 impl OrgResearchTool {
     pub fn new(db: Arc<Mutex<Database>>, client: &Client, secrets: &Secrets) -> Result<Self, Box<dyn Error>> {
         Ok(OrgResearchTool {
             input: InputState {
-                parent_org: String::from("Enter parent organization"),
-                search_term: String::from("Enter search term"),
+                parent_org: String::new(),
+                search_term: String::new(),
                 current_field: 0,
                 allow_no_parent: false,
             },
@@ -43,21 +47,54 @@ impl OrgResearchTool {
             db: db,
             client: client.clone(),
             secrets: secrets.clone(),
+            loading: false,
         })
     }
 
-    fn fetch_orgs(&mut self) -> Result<String, Box<dyn Error>> {
-        // Placeholder: GitHub API doesn't support direct org search by parent
-        Ok("Domain verification not implemented".into())
+    async fn fetch_orgs(&mut self) -> Result<String, Box<dyn Error>> {
+        self.loading = true;
+        let query = if self.input.parent_org.is_empty() {
+            self.input.search_term.clone()
+        } else {
+            format!("org:{} {}", self.input.parent_org, self.input.search_term)
+        };
+        
+        let url = format!("https://api.github.com/search/users?q={}+type:org", query);
+        let resp = self.client.get(&url)
+            .header("Authorization", format!("token {}", self.secrets.github_token.expose_secret()))
+            .send()
+            .await?;
+
+        if !resp.status().is_success() {
+            self.loading = false;
+            return Err(format!("GitHub API error: {}", resp.status()).into());
+        }
+
+        let search_results: SearchResponse = resp.json().await?;
+        self.results = search_results.items;
+        self.loading = false;
+        Ok(format!("Found {} organizations", self.results.len()))
     }
 }
 
+use async_trait::async_trait;
+
+#[async_trait]
 impl super::Tool for OrgResearchTool {
     fn name(&self) -> &'static str {
         "Org Research"
     }
 
     fn render(&self, f: &mut Frame, area: Rect) {
+        if self.loading {
+            let area = f.area();
+            let loading = Paragraph::new("Searching GitHub Organizations...")
+                .alignment(Alignment::Center)
+                .block(Block::default().borders(Borders::ALL));
+            f.render_widget(loading, area);
+            return;
+        }
+
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -85,7 +122,7 @@ impl super::Tool for OrgResearchTool {
         f.render_widget(results, chunks[3]);
     }
 
-    fn handle_input(&mut self, key: KeyEvent) -> Result<String, Box<dyn Error>> {
+    async fn handle_input(&mut self, key: KeyEvent) -> Result<String, Box<dyn Error>> {
         match key.code {
             KeyCode::Up => {
                 self.input.current_field = self.input.current_field.saturating_sub(1);
@@ -99,7 +136,7 @@ impl super::Tool for OrgResearchTool {
                 self.input.allow_no_parent = !self.input.allow_no_parent;
                 Ok(format!("Allow No Parent: {}", self.input.allow_no_parent))
             }
-            KeyCode::Enter => self.fetch_orgs(),
+            KeyCode::Enter => self.fetch_orgs().await,
             KeyCode::Char('e') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                 serde_json::to_writer(std::fs::File::create("org_results.json")?, &self.results)?;
                 Ok("Exported to org_results.json".into())

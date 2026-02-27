@@ -19,5 +19,9 @@ zeroize = "1.6"
 base64 = "0.22.1"
 
 arboard = "3.0.0"
+async-trait = "0.1.89"
+toml = "1.0.3"
+dirs = "6.0.0"
+thiserror = "2.0.18"
 
 [dev-dependencies]

@@ -51,3 +51,31 @@ pub struct Release {
 pub struct Asset {
     pub name: String,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_organization() {
+        let json = r#"{"login": "google", "url": "https://api.github.com/orgs/google"}"#;
+        let org: Organization = serde_json::from_str(json).unwrap();
+        assert_eq!(org.login, "google");
+    }
+
+    #[test]
+    fn test_parse_repository() {
+        let json = r#"{
+            "name": "dev-toolbox",
+            "stargazers_count": 10,
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z",
+            "pushed_at": "2024-01-01T00:00:00Z",
+            "releases": [],
+            "description": "test"
+        }"#;
+        let repo: Repository = serde_json::from_str(json).unwrap();
+        assert_eq!(repo.name, "dev-toolbox");
+        assert_eq!(repo.stargazers_count, 10);
+    }
+}

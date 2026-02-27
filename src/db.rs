@@ -8,8 +8,8 @@ pub struct Database {
 }
 
 impl Database {
-    pub fn new() -> Result<Self, Box<dyn Error>> {
-        let conn = Connection::open("cache.db")?;
+    pub fn new(path: &str) -> Result<Self, Box<dyn Error>> {
+        let conn = Connection::open(path)?;
         conn.execute(
             "CREATE TABLE IF NOT EXISTS repos (
                 username TEXT NOT NULL,

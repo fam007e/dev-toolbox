@@ -6,12 +6,15 @@ use ratatui::{
 };
 use dev_toolbox::app::App;
 use dev_toolbox::secrets::Secrets;
+use dev_toolbox::config::Config;
 use std::io;
 use clap::{Arg, Command};
 use secrecy::ExposeSecret;
+use std::error::Error;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), Box<dyn Error>> {
+    let config = Config::load()?;
     let matches = Command::new("Dev-Toolbox")
         .version("1.0")
         .about("A modular CLI toolbox for GitHub and Unicode analysis")
@@ -47,9 +50,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut terminal = Terminal::new(backend)?;
     
 
-    let db = Arc::new(Mutex::new(Database::new()?));
+    let db = Arc::new(Mutex::new(Database::new(&config.cache_db_path)?));
     
-    let mut app = App::new(db, secrets)?;
+    let mut app = App::new(db, secrets, config)?;
     
     app.run(&mut terminal).await?;
     

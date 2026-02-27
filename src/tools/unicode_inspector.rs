@@ -13,11 +13,14 @@ use ratatui::{
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use unicode_segmentation::UnicodeSegmentation;
 
+use std::sync::atomic::{AtomicBool, Ordering};
+
 pub struct UnicodeInspectorTool {
     input: InputState,
     results: Vec<UnicodeChar>,
     sequential: bool,
     db: Arc<Mutex<Database>>,
+    is_loading: Arc<AtomicBool>,
 }
 
 struct InputState {
@@ -27,54 +30,21 @@ struct InputState {
     current_field: usize,
 }
 
+use crate::config::Config;
+
 impl UnicodeInspectorTool {
-    pub fn new(db: Arc<Mutex<Database>>) -> Result<Self, Box<dyn Error>> {
-        let unicode_data_path = "UnicodeData.txt";
-        let blocks_path = "Blocks.txt";
+    pub fn new(db: Arc<Mutex<Database>>, config: &Config) -> Result<Self, Box<dyn Error>> {
+        let is_loading = Arc::new(AtomicBool::new(false));
+        let db_clone = Arc::clone(&db);
+        let loading_clone = Arc::clone(&is_loading);
+        let unicode_data_path = config.unicode_data_path.clone();
+        let blocks_path = config.blocks_path.clone();
 
-        {
-            let mut locked_db = db.lock().unwrap();
-            let tx = locked_db.conn().transaction()?;
-
-            if std::path::Path::new(unicode_data_path).exists() {
-                let chars_data = fs::read_to_string(unicode_data_path)?;
-                for line in chars_data.lines() {
-                    let fields: Vec<&str> = line.split(';').collect();
-                    if fields.len() >= 3 {
-                        let codepoint = fields[0].to_string();
-                        let name = fields[1].to_string();
-                        let block = fields[2].to_string();
-                        tx.execute(
-                            "INSERT OR REPLACE INTO unicode_chars (codepoint, name, block) VALUES (?1, ?2, ?3)",
-                            params![codepoint, name, block],
-                        )?;
-                    }
-                }
-            }
-
-            if std::path::Path::new(blocks_path).exists() {
-                let blocks_data = fs::read_to_string(blocks_path)?;
-                for line in blocks_data.lines() {
-                    if !line.starts_with('#') && !line.is_empty() {
-                        let parts: Vec<&str> = line.split(';').collect();
-                        if parts.len() == 2 {
-                            let range: Vec<&str> = parts[0].trim().split("..").collect();
-                            if range.len() == 2 {
-                                let range_start = range[0].to_string();
-                                let range_end = range[1].to_string();
-                                let name = parts[1].trim().to_string();
-                                tx.execute(
-                                    "INSERT OR REPLACE INTO unicode_blocks (name, range_start, range_end) VALUES (?1, ?2, ?3)",
-                                    params![name, range_start, range_end],
-                                )?;
-                            }
-                        }
-                    }
-                }
-            }
-
-            tx.commit()?;
-        };
+        tokio::spawn(async move {
+            loading_clone.store(true, Ordering::SeqCst);
+            let _ = Self::import_data_if_needed(db_clone, unicode_data_path, blocks_path);
+            loading_clone.store(false, Ordering::SeqCst);
+        });
 
         Ok(UnicodeInspectorTool {
             input: InputState {
@@ -85,8 +55,35 @@ impl UnicodeInspectorTool {
             },
             results: Vec::new(),
             sequential: false,
-            db: db,
+            db,
+            is_loading,
         })
+    }
+
+    fn import_data_if_needed(db: Arc<Mutex<Database>>, unicode_path: String, _blocks_path: String) -> Result<(), Box<dyn Error>> {
+        let mut locked_db = db.lock().unwrap();
+        
+        // Only import if table is empty
+        let count: u32 = locked_db.conn().query_row("SELECT COUNT(*) FROM unicode_chars", [], |r| r.get(0)).unwrap_or(0);
+        if count > 0 {
+            return Ok(());
+        }
+
+        let tx = locked_db.conn().transaction()?;
+        if std::path::Path::new(&unicode_path).exists() {
+            let chars_data = fs::read_to_string(unicode_path)?;
+            for line in chars_data.lines() {
+                let fields: Vec<&str> = line.split(';').collect();
+                if fields.len() >= 3 {
+                    tx.execute(
+                        "INSERT OR REPLACE INTO unicode_chars (codepoint, name, block) VALUES (?1, ?2, ?3)",
+                        params![fields[0], fields[1], fields[2]],
+                    )?;
+                }
+            }
+        }
+        tx.commit()?;
+        Ok(())
     }
 
     fn analyze_text(&mut self) -> Result<String, Box<dyn Error>> {
@@ -148,12 +145,24 @@ impl UnicodeInspectorTool {
     }
 }
 
+use async_trait::async_trait;
+
+#[async_trait]
 impl super::Tool for UnicodeInspectorTool {
     fn name(&self) -> &'static str {
         "Unicode Inspector"
     }
 
     fn render(&self, f: &mut Frame, area: Rect) {
+        if self.is_loading.load(Ordering::SeqCst) {
+            let area = f.area();
+            let loading = Paragraph::new("Loading Unicode Database...")
+                .alignment(Alignment::Center)
+                .block(Block::default().borders(Borders::ALL));
+            f.render_widget(loading, area);
+            return;
+        }
+
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -192,7 +201,7 @@ impl super::Tool for UnicodeInspectorTool {
         f.render_widget(results, chunks[4]);
     }
 
-    fn handle_input(&mut self, key: KeyEvent) -> Result<String, Box<dyn Error>> {
+    async fn handle_input(&mut self, key: KeyEvent) -> Result<String, Box<dyn Error>> {
         match key.code {
             KeyCode::Up => {
                 self.input.current_field = self.input.current_field.saturating_sub(1);

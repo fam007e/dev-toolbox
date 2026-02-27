@@ -11,6 +11,8 @@ use ratatui::{
 use std::io;
 use reqwest::Client;
 
+use crate::config::Config;
+
 pub struct App {
     tab_index: usize,
     tools: Vec<Box<dyn Tool>>,
@@ -21,10 +23,12 @@ pub struct App {
     client: Client,
     #[allow(dead_code)]
     secrets: Secrets,
+    #[allow(dead_code)]
+    config: Config,
 }
 
 impl App {
-    pub fn new(db: Arc<Mutex<Database>>, secrets: Secrets) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(db: Arc<Mutex<Database>>, secrets: Secrets, config: Config) -> Result<Self, Box<dyn std::error::Error>> {
         let client = Client::builder()
             .user_agent("Dev-Toolbox/1.0")
             .https_only(true)
@@ -35,17 +39,18 @@ impl App {
 
         tools.push(Box::new(RepoExplorerTool::new(Arc::clone(&db), &client, &secrets)?));
 
-        tools.push(Box::new(UnicodeInspectorTool::new(Arc::clone(&db))?));
+        tools.push(Box::new(UnicodeInspectorTool::new(Arc::clone(&db), &config)?));
 
         tools.push(Box::new(JwtDecoderTool::new()));
 
         Ok(App {
             tab_index: 0,
             tools,
-            message: String::from("Welcome to Dev-Toolbox! Press 'q' to quit, 'Tab' to switch tools."),
+            message: String::from("Welcome to Dev-Toolbox! Use shortcuts below to navigate."),
             db,
             client,
             secrets,
+            config,
         })
     }
 
@@ -55,9 +60,10 @@ impl App {
                 let chunks = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints([
-                        Constraint::Length(3),
-                        Constraint::Min(0),
-                        Constraint::Length(3),
+                        Constraint::Length(3), // Tabs
+                        Constraint::Min(0),    // Tool Content
+                        Constraint::Length(3), // Status
+                        Constraint::Length(3), // Hints
                     ])
                     .split(f.area());
 
@@ -77,6 +83,11 @@ impl App {
                     .block(Block::default().borders(Borders::ALL).title(Span::styled("Status", Style::default().fg(Color::Magenta))))
                     .style(Style::default().fg(Color::White));
                 f.render_widget(message, chunks[2]);
+
+                let hints = Paragraph::new("Ctrl+Q: Quit | Tab: Next Tool | Ctrl+C: Copy Status | Enter: Run/Action | Up/Down: Switch Fields | Ctrl+E: Export")
+                    .block(Block::default().borders(Borders::ALL).title(Span::styled("Hints", Style::default().fg(Color::Yellow))))
+                    .style(Style::default().fg(Color::Gray));
+                f.render_widget(hints, chunks[3]);
             })?;
             let event = crossterm::event::read()?;
             match event {
@@ -89,7 +100,7 @@ impl App {
                     },
                     KeyCode::Tab => self.tab_index = (self.tab_index + 1) % self.tools.len(),
                     _ => {
-                        self.message = self.tools[self.tab_index].handle_input(key).unwrap_or_default();
+                        self.message = self.tools[self.tab_index].handle_input(key).await.unwrap_or_else(|e| e.to_string());
                     }
                 },
                 Event::Mouse(mouse) => {

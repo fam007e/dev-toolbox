@@ -40,6 +40,9 @@ impl JwtDecoderTool {
     }
 }
 
+use async_trait::async_trait;
+
+#[async_trait]
 impl super::Tool for JwtDecoderTool {
     fn name(&self) -> &'static str {
         "JWT Decoder"
@@ -66,7 +69,7 @@ impl super::Tool for JwtDecoderTool {
         f.render_widget(results, chunks[1]);
     }
 
-    fn handle_input(&mut self, key: KeyEvent) -> Result<String, Box<dyn Error>> {
+    async fn handle_input(&mut self, key: KeyEvent) -> Result<String, Box<dyn Error>> {
         match key.code {
             KeyCode::Char(c) => {
                 self.input.push(c);
@@ -83,5 +86,31 @@ impl super::Tool for JwtDecoderTool {
 
     fn save_cache(&self) -> Result<(), Box<dyn Error>> {
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_decode_jwt_invalid_format() {
+        let mut tool = JwtDecoderTool::new();
+        tool.input = "invalid.jwt".to_string();
+        assert!(tool.decode_jwt().is_err());
+    }
+
+    #[test]
+    fn test_decode_jwt_valid() {
+        // Base64 for {"alg":"HS256"} and {"sub":"1234567890","name":"John Doe","iat":1516239022}
+        let header = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";
+        let payload = "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ";
+        let jwt = format!("{}.{}.signature", header, payload);
+        
+        let mut tool = JwtDecoderTool::new();
+        tool.input = jwt;
+        assert!(tool.decode_jwt().is_ok());
+        assert_eq!(tool.header.unwrap()["alg"], "HS256");
+        assert_eq!(tool.payload.unwrap()["name"], "John Doe");
     }
 }
