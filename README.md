@@ -26,36 +26,39 @@ Detailed documentation for each tool can be found in the [Wiki](docs/WIKI.md).
 
 ### Installation and Usage
 
-1. **Clone the repository:**
+#### Option 1: Download Binary (Recommended for Users)
+Download the latest pre-built binary for your OS from the [Releases](https://github.com/fam007e/dev-toolbox/releases) page.
 
+#### Option 2: Build from Source
+1. **Clone the repository:**
    ```bash
    git clone https://github.com/fam007e/dev-toolbox.git
    cd dev-toolbox
    ```
-
-2. **Secrets Configuration:**
-
-   Create a `.env` file in the root of the project to store your GitHub Personal Access Token.
-
-   ```
-   GITHUB_TOKEN=your_github_token
-   ```
-
-   Generate a token [here](https://github.com/settings/tokens).
-
-3. **Application Configuration:**
-
-   On the first run, the app will generate a `config.toml` in your OS-specific config directory:
-   - **Linux:** `~/.config/dev-toolbox/config.toml`
-   - **Windows:** `%AppData%\Roaming\dev-toolbox\config.toml`
-
-   You can modify this file to change database paths or API URLs.
-
-4. **Build and run:**
-
+2. **Build and run:**
    ```bash
    cargo run --release
    ```
+
+## Configuration
+
+### 1. Secrets (.env)
+The application requires a GitHub Personal Access Token to fetch repository and organization data. Create a `.env` file containing:
+```
+GITHUB_TOKEN=your_github_token
+```
+You can place this file in:
+- The **current working directory** where you run the app.
+- The **OS-specific config directory** (see below).
+
+Generate a token [here](https://github.com/settings/tokens).
+
+### 2. Application Config (config.toml)
+On the first run, the app generates a `config.toml` in your OS-specific config directory:
+- **Linux:** `~/.config/dev-toolbox/`
+- **Windows:** `%AppData%\Roaming\dev-toolbox\`
+
+You can modify this file to change database paths or API URLs.
 
 ## Navigation
 

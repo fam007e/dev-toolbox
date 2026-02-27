@@ -525,7 +525,7 @@ dependencies = [
 
 [[package]]
 name = "dev-toolbox"
-version = "1.0.0"
+version = "2026.2.28"
 dependencies = [
  "arboard",
  "async-trait",
