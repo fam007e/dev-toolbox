@@ -27,8 +27,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let env_path = matches.get_one::<String>("env").unwrap();
     let secrets = Secrets::load(env_path)?;
     if secrets.github_token.expose_secret().is_empty() {
-        eprintln!("Error: GitHub token missing in .env file");
-        return Err("GitHub token missing in .env file".into());
+        let config_dir = dirs::config_dir()
+            .map(|p| p.join("dev-toolbox").join(".env"))
+            .map(|p| p.to_string_lossy().to_string())
+            .unwrap_or_else(|| "~/.config/dev-toolbox/.env".to_string());
+
+        eprintln!("Error: GITHUB_TOKEN not found.");
+        eprintln!("\nTo use this tool, please:");
+        eprintln!("1. Set the GITHUB_TOKEN environment variable.");
+        eprintln!("2. OR create a .env file in the current directory.");
+        eprintln!("3. OR create a .env file at: {}", config_dir);
+        eprintln!("\nYou can generate a token at: https://github.com/settings/tokens");
+        return Err("GitHub token missing".into());
     }
 
     crossterm::terminal::enable_raw_mode()?;
