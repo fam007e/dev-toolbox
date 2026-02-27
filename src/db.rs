@@ -1,8 +1,6 @@
 use rusqlite::Connection;
 use std::error::Error;
 
-
-
 pub struct Database {
     conn: Connection,
 }
@@ -35,7 +33,7 @@ impl Database {
             )",
             [],
         )?;
-        
+
         Ok(Database { conn })
     }
 

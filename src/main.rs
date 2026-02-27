@@ -1,16 +1,13 @@
-use std::sync::{Arc, Mutex};
-use dev_toolbox::db::Database;
-use ratatui::{
-    backend::CrosstermBackend,
-    Terminal,
-};
-use dev_toolbox::app::App;
-use dev_toolbox::secrets::Secrets;
-use dev_toolbox::config::Config;
-use std::io;
 use clap::{Arg, Command};
+use dev_toolbox::app::App;
+use dev_toolbox::config::Config;
+use dev_toolbox::db::Database;
+use dev_toolbox::secrets::Secrets;
+use ratatui::{backend::CrosstermBackend, Terminal};
 use secrecy::ExposeSecret;
 use std::error::Error;
+use std::io;
+use std::sync::{Arc, Mutex};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -34,7 +31,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
         return Err("GitHub token missing in .env file".into());
     }
 
-    
     crossterm::terminal::enable_raw_mode()?;
     let mut stdout = io::stdout();
     crossterm::execute!(
@@ -42,23 +38,19 @@ async fn main() -> Result<(), Box<dyn Error>> {
         crossterm::terminal::EnterAlternateScreen,
         crossterm::event::EnableMouseCapture
     )?;
-    
 
-    
     let backend = CrosstermBackend::new(stdout);
-    
+
     let mut terminal = Terminal::new(backend)?;
-    
 
     let db = Arc::new(Mutex::new(Database::new(&config.cache_db_path)?));
-    
+
     let mut app = App::new(db, secrets, config)?;
-    
+
     app.run(&mut terminal).await?;
-    
+
     app.save_cache()?;
 
-    
     crossterm::terminal::disable_raw_mode()?;
     crossterm::execute!(
         terminal.backend_mut(),
@@ -66,8 +58,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
         crossterm::event::DisableMouseCapture
     )?;
     terminal.show_cursor()?;
-    
 
     Ok(())
 }
-

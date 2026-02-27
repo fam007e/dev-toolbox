@@ -1,15 +1,15 @@
 use crate::db::Database;
 use crate::secrets::Secrets;
-use crate::tools::{Tool, OrgResearchTool, RepoExplorerTool, UnicodeInspectorTool, JwtDecoderTool};
-use crossterm::event::{Event, KeyCode, MouseButton, MouseEventKind};
+use crate::tools::{JwtDecoderTool, OrgResearchTool, RepoExplorerTool, Tool, UnicodeInspectorTool};
 use arboard::Clipboard;
-use std::sync::{Arc, Mutex};
+use crossterm::event::{Event, KeyCode, MouseButton, MouseEventKind};
 use ratatui::{
     prelude::*,
-    widgets::{Block, Borders, Tabs, Paragraph},
+    widgets::{Block, Borders, Paragraph, Tabs},
 };
-use std::io;
 use reqwest::Client;
+use std::io;
+use std::sync::{Arc, Mutex};
 
 use crate::config::Config;
 
@@ -28,20 +28,22 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(db: Arc<Mutex<Database>>, secrets: Secrets, config: Config) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(
+        db: Arc<Mutex<Database>>,
+        secrets: Secrets,
+        config: Config,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
         let client = Client::builder()
             .user_agent("Dev-Toolbox/1.0")
             .https_only(true)
             .build()?;
-        let mut tools: Vec<Box<dyn Tool>> = Vec::new();
 
-        tools.push(Box::new(OrgResearchTool::new(Arc::clone(&db), &client, &secrets)?));
-
-        tools.push(Box::new(RepoExplorerTool::new(Arc::clone(&db), &client, &secrets)?));
-
-        tools.push(Box::new(UnicodeInspectorTool::new(Arc::clone(&db), &config)?));
-
-        tools.push(Box::new(JwtDecoderTool::new()));
+        let tools: Vec<Box<dyn Tool>> = vec![
+            Box::new(OrgResearchTool::new(Arc::clone(&db), &client, &secrets)?),
+            Box::new(RepoExplorerTool::new(Arc::clone(&db), &client, &secrets)?),
+            Box::new(UnicodeInspectorTool::new(Arc::clone(&db), &config)?),
+            Box::new(JwtDecoderTool::new()),
+        ];
 
         Ok(App {
             tab_index: 0,
@@ -54,7 +56,10 @@ impl App {
         })
     }
 
-    pub async fn run(&mut self, terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()> {
+    pub async fn run(
+        &mut self,
+        terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
+    ) -> io::Result<()> {
         loop {
             terminal.draw(|f| {
                 let chunks = Layout::default()
@@ -92,23 +97,34 @@ impl App {
             let event = crossterm::event::read()?;
             match event {
                 Event::Key(key) => match key.code {
-                    KeyCode::Char('q') if key.modifiers.contains(crossterm::event::KeyModifiers::CONTROL) => break,
-                    KeyCode::Char('c') if key.modifiers.contains(crossterm::event::KeyModifiers::CONTROL) => {
+                    KeyCode::Char('q')
+                        if key
+                            .modifiers
+                            .contains(crossterm::event::KeyModifiers::CONTROL) =>
+                    {
+                        break
+                    }
+                    KeyCode::Char('c')
+                        if key
+                            .modifiers
+                            .contains(crossterm::event::KeyModifiers::CONTROL) =>
+                    {
                         let mut clipboard = Clipboard::new().unwrap();
                         clipboard.set_text(self.message.clone()).unwrap();
                         self.message = "Copied to clipboard!".to_string();
-                    },
+                    }
                     KeyCode::Tab => self.tab_index = (self.tab_index + 1) % self.tools.len(),
                     _ => {
-                        self.message = self.tools[self.tab_index].handle_input(key).await.unwrap_or_else(|e| e.to_string());
+                        self.message = self.tools[self.tab_index]
+                            .handle_input(key)
+                            .await
+                            .unwrap_or_else(|e| e.to_string());
                     }
                 },
                 Event::Mouse(mouse) => {
-                    if mouse.kind == MouseEventKind::Down(MouseButton::Left) {
-                        if mouse.row == 1 {
-                            let tab_width = terminal.size()?.width / self.tools.len() as u16;
-                            self.tab_index = (mouse.column / tab_width) as usize;
-                        }
+                    if mouse.kind == MouseEventKind::Down(MouseButton::Left) && mouse.row == 1 {
+                        let tab_width = terminal.size()?.width / self.tools.len() as u16;
+                        self.tab_index = (mouse.column / tab_width) as usize;
                     }
                 }
                 _ => {}

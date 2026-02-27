@@ -1,16 +1,22 @@
 use base64::{engine::general_purpose, Engine as _};
-use serde_json::Value;
-use std::error::Error;
+use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     prelude::*,
     widgets::{Block, Borders, Paragraph},
 };
-use crossterm::event::{KeyCode, KeyEvent};
+use serde_json::Value;
+use std::error::Error;
 
 pub struct JwtDecoderTool {
     input: String,
     header: Option<Value>,
     payload: Option<Value>,
+}
+
+impl Default for JwtDecoderTool {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl JwtDecoderTool {
@@ -51,21 +57,37 @@ impl super::Tool for JwtDecoderTool {
     fn render(&self, f: &mut Frame, area: Rect) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([
-                Constraint::Length(3),
-                Constraint::Min(0),
-            ])
+            .constraints([Constraint::Length(3), Constraint::Min(0)])
             .split(area);
 
-        let input = Paragraph::new(self.input.as_str())
-            .block(Block::default().borders(Borders::ALL).title(Line::from(Span::styled("JWT Input", Style::default().fg(Color::Green)))));
+        let input = Paragraph::new(self.input.as_str()).block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title(Line::from(Span::styled(
+                    "JWT Input",
+                    Style::default().fg(Color::Green),
+                ))),
+        );
         f.render_widget(input, chunks[0]);
 
-        let results = Paragraph::new(vec![
-            Line::from(format!("Header: {}", self.header.as_ref().map_or("None".to_string(), |v| v.to_string()))),
-            Line::from(format!("Payload: {}", self.payload.as_ref().map_or("None".to_string(), |v| v.to_string()))),
-        ])
-            .block(Block::default().borders(Borders::ALL).title(Line::from(Span::styled("JWT Results", Style::default().fg(Color::Green)))));
+        let results =
+            Paragraph::new(vec![
+                Line::from(format!(
+                    "Header: {}",
+                    self.header
+                        .as_ref()
+                        .map_or("None".to_string(), |v| v.to_string())
+                )),
+                Line::from(format!(
+                    "Payload: {}",
+                    self.payload
+                        .as_ref()
+                        .map_or("None".to_string(), |v| v.to_string())
+                )),
+            ])
+            .block(Block::default().borders(Borders::ALL).title(Line::from(
+                Span::styled("JWT Results", Style::default().fg(Color::Green)),
+            )));
         f.render_widget(results, chunks[1]);
     }
 
@@ -80,7 +102,7 @@ impl super::Tool for JwtDecoderTool {
                 Ok("Removed character".into())
             }
             KeyCode::Enter => self.decode_jwt(),
-            _ => Ok(String::new())
+            _ => Ok(String::new()),
         }
     }
 
@@ -106,7 +128,7 @@ mod tests {
         let header = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";
         let payload = "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ";
         let jwt = format!("{}.{}.signature", header, payload);
-        
+
         let mut tool = JwtDecoderTool::new();
         tool.input = jwt;
         assert!(tool.decode_jwt().is_ok());

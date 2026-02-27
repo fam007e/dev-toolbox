@@ -1,8 +1,8 @@
+use dirs;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::fs;
 use std::path::PathBuf;
-use dirs;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {

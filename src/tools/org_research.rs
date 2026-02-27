@@ -1,16 +1,16 @@
 use crate::db::Database;
-use std::sync::{Arc, Mutex};
 use crate::models::github::Organization;
 use crate::secrets::Secrets;
 use reqwest::Client;
+use std::sync::{Arc, Mutex};
 
-use serde_json;
-use std::error::Error;
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::{
     prelude::*,
     widgets::{Block, Borders, Paragraph},
 };
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use serde_json;
+use std::error::Error;
 
 pub struct OrgResearchTool {
     input: InputState,
@@ -31,11 +31,15 @@ struct InputState {
     allow_no_parent: bool,
 }
 
-use secrecy::ExposeSecret;
 use crate::models::github::SearchResponse;
+use secrecy::ExposeSecret;
 
 impl OrgResearchTool {
-    pub fn new(db: Arc<Mutex<Database>>, client: &Client, secrets: &Secrets) -> Result<Self, Box<dyn Error>> {
+    pub fn new(
+        db: Arc<Mutex<Database>>,
+        client: &Client,
+        secrets: &Secrets,
+    ) -> Result<Self, Box<dyn Error>> {
         Ok(OrgResearchTool {
             input: InputState {
                 parent_org: String::new(),
@@ -44,7 +48,7 @@ impl OrgResearchTool {
                 allow_no_parent: false,
             },
             results: Vec::new(),
-            db: db,
+            db,
             client: client.clone(),
             secrets: secrets.clone(),
             loading: false,
@@ -58,10 +62,15 @@ impl OrgResearchTool {
         } else {
             format!("org:{} {}", self.input.parent_org, self.input.search_term)
         };
-        
+
         let url = format!("https://api.github.com/search/users?q={}+type:org", query);
-        let resp = self.client.get(&url)
-            .header("Authorization", format!("token {}", self.secrets.github_token.expose_secret()))
+        let resp = self
+            .client
+            .get(&url)
+            .header(
+                "Authorization",
+                format!("token {}", self.secrets.github_token.expose_secret()),
+            )
             .send()
             .await?;
 
@@ -105,20 +114,47 @@ impl super::Tool for OrgResearchTool {
             ])
             .split(area);
 
-        let parent_input = Paragraph::new(self.input.parent_org.as_str())
-            .block(Block::default().borders(Borders::ALL).title(Line::from(Span::styled("Parent Org", Style::default().fg(Color::Green)))));
+        let parent_input = Paragraph::new(self.input.parent_org.as_str()).block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title(Line::from(Span::styled(
+                    "Parent Org",
+                    Style::default().fg(Color::Green),
+                ))),
+        );
         f.render_widget(parent_input, chunks[0]);
 
-        let search_input = Paragraph::new(self.input.search_term.as_str())
-            .block(Block::default().borders(Borders::ALL).title(Line::from(Span::styled("Search Term", Style::default().fg(Color::Green)))));
+        let search_input = Paragraph::new(self.input.search_term.as_str()).block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title(Line::from(Span::styled(
+                    "Search Term",
+                    Style::default().fg(Color::Green),
+                ))),
+        );
         f.render_widget(search_input, chunks[1]);
 
-        let allow_toggle = Paragraph::new(if self.input.allow_no_parent { "Yes" } else { "No" })
-            .block(Block::default().borders(Borders::ALL).title(Line::from(Span::styled("Allow No Parent", Style::default().fg(Color::Green)))));
+        let allow_toggle =
+            Paragraph::new(if self.input.allow_no_parent {
+                "Yes"
+            } else {
+                "No"
+            })
+            .block(Block::default().borders(Borders::ALL).title(Line::from(
+                Span::styled("Allow No Parent", Style::default().fg(Color::Green)),
+            )));
         f.render_widget(allow_toggle, chunks[2]);
 
-        let results = Paragraph::new(self.results.iter().map(|org| Line::from(org.login.clone())).collect::<Vec<_>>())
-            .block(Block::default().borders(Borders::ALL).title(Line::from(Span::styled("Org Results", Style::default().fg(Color::Green)))));
+        let results =
+            Paragraph::new(
+                self.results
+                    .iter()
+                    .map(|org| Line::from(org.login.clone()))
+                    .collect::<Vec<_>>(),
+            )
+            .block(Block::default().borders(Borders::ALL).title(Line::from(
+                Span::styled("Org Results", Style::default().fg(Color::Green)),
+            )));
         f.render_widget(results, chunks[3]);
     }
 
@@ -149,14 +185,18 @@ impl super::Tool for OrgResearchTool {
                 }
                 Ok("Input updated".into())
             }
-            KeyCode::Backspace => {
-                match self.input.current_field {
-                    0 => { self.input.parent_org.pop(); Ok("Removed character".into()) }
-                    1 => { self.input.search_term.pop(); Ok("Removed character".into()) }
-                    _ => Ok("No action".into())
+            KeyCode::Backspace => match self.input.current_field {
+                0 => {
+                    self.input.parent_org.pop();
+                    Ok("Removed character".into())
                 }
-            }
-            _ => Ok(String::new())
+                1 => {
+                    self.input.search_term.pop();
+                    Ok("Removed character".into())
+                }
+                _ => Ok("No action".into()),
+            },
+            _ => Ok(String::new()),
         }
     }
 
