@@ -1,17 +1,19 @@
 # Org Research Tool
 
-The Org Research tool allows you to gather information about a public GitHub organization. You can view a list of their public repositories, see a breakdown of the programming languages used across all of their projects, and get an overview of the software licenses they use.
+Gather and search for GitHub organizations.
 
 ## How to Use
 
-1.  **Enter the GitHub organization name** in the input field.
-2.  Press **Enter** to fetch the data.
-3.  The tool will display three panels:
-    *   **Repositories:** A list of the organization's public repositories.
-    *   **Languages:** A chart showing the distribution of programming languages.
-    *   **Licenses:** A list of the licenses used in the organization's repositories.
+1. **Enter Parent Org (Optional):** Specify a parent organization to filter results.
+2. **Enter Search Term:** Provide a keyword to search for organizations.
+3. **Toggle "Allow No Parent":** Use `Ctrl+A` to toggle if a parent is required for the search.
+4. **Fetch Data:** Press **Enter** to perform the search via the GitHub API.
 
-### Keybindings
+The tool will display a list of organizations matching your criteria.
 
--   `Ctrl+A`: Toggle "Allow No Parent" option.
--   `Ctrl+E`: Export current results to a JSON file.
+## Keybindings
+
+- `Up / Down`: Switch between input fields (Parent Org, Search Term).
+- `Enter`: Fetch organizations from GitHub.
+- `Ctrl+A`: Toggle the "Allow No Parent" option.
+- `Ctrl+E`: Export result list to `org_results.json`.

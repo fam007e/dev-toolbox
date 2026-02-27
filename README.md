@@ -14,13 +14,11 @@ A modular and extensible CLI toolbox for developers, built with Rust. This appli
 - **Repo Explorer:** Explore the contents of a public GitHub repository, view file details, and see a breakdown of the languages used.
 - **Unicode Inspector:** Look up Unicode characters by their code point and view detailed information about them.
 - **JWT Decoder:** Decode JSON Web Tokens to inspect their header and payload.
-
 ## Getting Started
 
 ### Prerequisites
 
 - **Rust:** [Install Rust](https://www.rust-lang.org/tools/install)
-- **Docker (for Linux builds on Windows):** [Install Docker Desktop](https://www.docker.com/products/docker-desktop/)
 - **Git:** [Install Git](https://git-scm.com/downloads/)
 
 ### Installation and Usage
@@ -32,40 +30,41 @@ A modular and extensible CLI toolbox for developers, built with Rust. This appli
    cd dev-toolbox
    ```
 
-2. **Configuration:**
+2. **Secrets Configuration:**
 
-   Create a `.env` file in the root of the project. This file is used to store your GitHub Personal Access Token, which is required for the `Org Research` and `Repo Explorer` tools.
+   Create a `.env` file in the root of the project to store your GitHub Personal Access Token.
 
    ```
    GITHUB_TOKEN=your_github_token
    ```
 
-   You can generate a new token [here](https://github.com/settings/tokens).
+   Generate a token [here](https://github.com/settings/tokens).
 
-3. **Build and run the application:**
+3. **Application Configuration:**
 
-   - **Windows:**
+   On the first run, the app will generate a `config.toml` in your OS-specific config directory:
+   - **Linux:** `~/.config/dev-toolbox/config.toml`
+   - **Windows:** `%AppData%\Roaming\dev-toolbox\config.toml`
 
-     ```bash
-     cargo build --release
-     ./target/release/dev-toolbox.exe
-     ```
+   You can modify this file to change database paths or API URLs.
 
-   - **Linux (and Linux on Windows with Docker):**
+4. **Build and run:**
 
-     ```bash
-     # Build the Docker image
-     docker build -t dev-toolbox-builder .
-
-     # Run the application
-     docker run -it dev-toolbox-builder /usr/src/dev-toolbox/target/release/dev-toolbox
-     ```
+   ```bash
+   cargo run --release
+   ```
 
 ## Navigation
+...
+- **Mouse / Touchpad:**
+  - **Click / Tap:** Select a tab to switch to that tool.
 
-- **Keyboard:**
-  - `Ctrl+Q`: Quit the application.
-  - `Ctrl+C`: Copy the current status message to clipboard.
+## Contact
+
+For support or reporting issues, contact [email](mailto:faisalmoshiur+devtoolbox@gmail.com).
+
+## Project Maintenance
+
   - `Tab`: Switch between tool tabs.
   - **Arrow Keys, Enter, etc.:** Used for interacting with the currently selected tool.
 

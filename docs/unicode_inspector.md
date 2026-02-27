@@ -1,19 +1,19 @@
 # Unicode Inspector Tool
 
-The Unicode Inspector tool allows you to look up information about a Unicode character.
+Look up detailed Unicode character data with instant-start performance.
 
 ## How to Use
 
-1.  **Enter a Unicode code point** in hexadecimal format (e.g., `1F60A`).
-2.  Press **Enter** to fetch the data.
-3.  The tool will display the following information:
-    *   **Character:** The character itself.
-    *   **Name:** The official Unicode name of the character.
-    *   **Block:** The Unicode block the character belongs to.
-    *   **Properties:** Other properties of the character.
+The tool features **lazy loading**. On the first run, it imports the Unicode database in the background. A "Loading..." screen will appear while this process is active, but subsequent starts are instantaneous.
 
-### Keybindings
+1. **Enter Text/Input:** Type directly to analyze individual graphemes.
+2. **Enter Codepoint:** Search by a specific hexadecimal code (e.g., `1F60A`).
+3. **Enter Name:** Search by the official Unicode name (e.g., `SMILE`).
 
--   `Ctrl+A`: Toggle "Sequential Mode".
--   `Ctrl+L`: Perform lookup based on input (codepoint or name).
--   `Ctrl+E`: Export current results to a JSON file.
+## Keybindings
+
+- `Up / Down`: Switch between input fields (Input, Codepoint, Name).
+- `Enter`: Analyze the text field.
+- `Ctrl+L`: Perform a database lookup using the Codepoint or Name field.
+- `Ctrl+A`: Toggle "Sequential Mode" for text analysis.
+- `Ctrl+E`: Export current character results to `unicode_results.json`.

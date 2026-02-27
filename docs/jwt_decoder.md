@@ -1,11 +1,15 @@
 # JWT Decoder Tool
 
-The JWT Decoder tool allows you to decode JSON Web Tokens (JWTs) and view their contents.
+Decode JSON Web Tokens (JWT) into human-readable JSON.
 
 ## How to Use
 
-1.  **Paste a JWT** into the input field.
-2.  Press **Enter** to decode the token.
-3.  The tool will display two panels:
-    *   **Header:** The decoded header of the JWT.
-    *   **Payload:** The decoded payload of the JWT.
+1. **Paste JWT:** Paste the full token (header.payload.signature) into the input field.
+2. **Decode:** Press **Enter** to parse the Base64-encoded segments.
+
+The tool displays the **Header** and **Payload** as structured JSON objects.
+
+## Keybindings
+
+- `Enter`: Decode the current input.
+- `Backspace`: Delete characters from the input field.
