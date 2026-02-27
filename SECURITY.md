@@ -6,7 +6,7 @@ Currently, only the latest version of Dev-Toolbox is supported with security upd
 
 ## Reporting a Vulnerability
 
-We take the security of this project seriously. If you believe you have found a security vulnerability, please do not open a public issue. Instead, please report it via private email to the project maintainers.
+We take the security of this project seriously. If you believe you have found a security vulnerability, please do not open a public issue. Instead, please report it via [email](mailto:faisalmoshiur+devtoolbox@gmail.com) to the project maintainers.
 
 ## Security Features in Use
 
