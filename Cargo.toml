@@ -15,7 +15,7 @@ tokio = { version = "1.49.0", features = ["full"] }
 unicode-segmentation = "1.10"
 dotenv = "0.15"
 secrecy = { version = "0.10.3", features = ["serde"] }
-zeroize = "1.6"
+zeroize = "1.8"
 base64 = "0.22.1"
 
 arboard = "3.6.1"
