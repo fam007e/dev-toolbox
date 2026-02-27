@@ -2,32 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.1.0] - 2026-02-27
+## [v2026.02.28] - 2026-02-28
 
-### Added
-- **Asynchronous Tool Architecture**: Implemented `async-trait` for the `Tool` trait, enabling non-blocking I/O operations for all tools.
-- **GitHub API Integration**: 
-  - `Repo Explorer` now fetches real user repositories and latest releases.
-  - `Org Research` now implements GitHub organization search.
-- **Configuration System**: Added `config.toml` support via `toml` and `dirs` crates for cross-platform portability.
-- **Lazy Loading**: Implemented background data import for `Unicode Inspector` with TUI loading indicators.
-- **Unit Tests**: Added initial test suite for JWT decoding and GitHub model parsing.
-- **CI/CD**: Integrated GitHub Actions for automated building, testing, linting (`clippy`), and spellchecking (`typos`).
-- **Community Standards**: Added `CODE_OF_CONDUCT.md`, `SECURITY.md`, and updated `CONTRIBUTING.md`.
+### Features
+- **Modular TUI Architecture**: A flexible system for adding developer tools using the `Tool` trait.
+- **Org Research**: Get insights into GitHub organizations, language statistics, and public repositories.
+- **Repo Explorer**: Explore GitHub users' public repositories and their latest releases.
+- **Unicode Inspector**: Instant-start, lazy-loading lookup for Unicode characters, names, and hex points.
+- **JWT Decoder**: Decode JSON Web Tokens into structured JSON objects.
+- **Asynchronous Engine**: Powered by `tokio` and `async-trait` for non-blocking I/O.
+- **Persistent Storage**: SQLite-based caching for faster performance across sessions.
+- **Configuration System**: OS-specific config and cache directory support (`config.toml`).
 
-### Changed
-- **Navigation Shortcuts**: 
-  - `Ctrl+Q` to quit.
-  - `Ctrl+C` to copy status to clipboard.
-  - Updated tool-specific shortcuts to use `Ctrl+` modifiers for input safety.
-- **Storage Paths**: Moved `cache.db` and `config.toml` to OS-specific standard directories (e.g., `~/.config/dev-toolbox`).
+### Security & CI/CD
+- **Hardenened CI/CD**: All GitHub Actions pinned to immutable commit SHAs with strict top-level permissions.
+- **Automated Releases**: Cross-platform binaries (Linux & Windows) built and uploaded automatically on version tags.
+- **CodeQL Integration**: Advanced security scanning enabled for Rust and GitHub Actions.
+- **Credential Protection**: Uses `secrecy` and `zeroize` crates to protect GitHub API tokens.
+- **Flexible Secret Loading**: Supports `.env` files in both current working directories and OS configuration folders.
 
-### Fixed
-- Fixed UI "freezing" during startup while importing Unicode data.
-- Resolved several compiler warnings related to unused imports and dead code.
-- Hardcoded file paths replaced with configurable settings.
-
-## [1.0.0] - Initial Release
-
-- Basic TUI application with modular tool structure.
-- Placeholder implementations for Unicode Inspector, JWT Decoder, Repo Explorer, and Org Research.
+### Documentation
+- Comprehensive **Wiki** and tool-specific guides.
+- Updated README with professional installation and configuration options.

@@ -13,7 +13,7 @@ use std::sync::{Arc, Mutex};
 async fn main() -> Result<(), Box<dyn Error>> {
     let config = Config::load()?;
     let matches = Command::new("Dev-Toolbox")
-        .version("1.0")
+        .version(env!("CARGO_PKG_VERSION"))
         .about("A modular CLI toolbox for GitHub and Unicode analysis")
         .arg(
             Arg::new("env")
