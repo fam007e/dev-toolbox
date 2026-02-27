@@ -45,10 +45,10 @@ jobs:
           COMMIT_URL: ${{ github.event.head_commit.url }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
-          CONTENT="🚀 **Push Event** in `$REPOSITORY` by **$ACTOR**
+          CONTENT="🚀 **Push Event** in \`$REPOSITORY\` by **$ACTOR**
 
-          Branch: `$REF_NAME`
-          Commit: [`$SHA`]($COMMIT_URL)"
+          Branch: \`$REF_NAME\`
+          Commit: [\`$SHA\`]($COMMIT_URL)"
           PAYLOAD=$(jq -n --arg content "$CONTENT" '{"content": $content}')
           curl -X POST \
                -H "Content-Type: application/json" \
@@ -66,7 +66,7 @@ jobs:
           ACTOR: ${{ github.actor }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
-          CONTENT="📋 **Pull Request ${ACTION^}** in `$REPOSITORY` by **$ACTOR**
+          CONTENT="📋 **Pull Request ${ACTION^}** in \`$REPOSITORY\` by **$ACTOR**
 
           [#$PR_NUMBER: $PR_TITLE]($PR_URL)"
           PAYLOAD=$(jq -n --arg content "$CONTENT" '{"content": $content}')
@@ -86,7 +86,7 @@ jobs:
           ACTOR: ${{ github.actor }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
-          CONTENT="👀 **Pull Request Review ${REVIEW_STATE^}** in `$REPOSITORY` by **$ACTOR**
+          CONTENT="👀 **Pull Request Review ${REVIEW_STATE^}** in \`$REPOSITORY\` by **$ACTOR**
 
           [#$PR_NUMBER: $PR_TITLE]($PR_URL)"
           PAYLOAD=$(jq -n --arg content "$CONTENT" '{"content": $content}')
@@ -106,7 +106,7 @@ jobs:
           ACTOR: ${{ github.actor }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
-          CONTENT="🐛 **Issue ${ACTION^}** in `$REPOSITORY` by **$ACTOR**
+          CONTENT="🐛 **Issue ${ACTION^}** in \`$REPOSITORY\` by **$ACTOR**
 
           [#$ISSUE_NUMBER: $ISSUE_TITLE]($ISSUE_URL)"
           PAYLOAD=$(jq -n --arg content "$CONTENT" '{"content": $content}')
@@ -125,7 +125,7 @@ jobs:
           REPOSITORY: ${{ github.repository }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
-          CONTENT="🎉 **Release ${ACTION^}** in `$REPOSITORY`
+          CONTENT="🎉 **Release ${ACTION^}** in \`$REPOSITORY\`
 
           [$RELEASE_NAME ($RELEASE_TAG)]($RELEASE_URL)"
           PAYLOAD=$(jq -n --arg content "$CONTENT" '{"content": $content}')
@@ -143,9 +143,9 @@ jobs:
           REPOSITORY: ${{ github.repository }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
-          CONTENT="✅ **Check Run Completed** in `$REPOSITORY`
+          CONTENT="✅ **Check Run Completed** in \`$REPOSITORY\`
 
-          Check: `$CHECK_NAME`
+          Check: \`$CHECK_NAME\`
           Status: $CHECK_STATUS
           Result: $CHECK_CONCLUSION"
           PAYLOAD=$(jq -n --arg content "$CONTENT" '{"content": $content}')
@@ -162,7 +162,7 @@ jobs:
           REPOSITORY: ${{ github.repository }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
-          CONTENT="📊 **Check Suite Completed** in `$REPOSITORY`
+          CONTENT="📊 **Check Suite Completed** in \`$REPOSITORY\`
 
           Status: $CHECK_STATUS
           Result: $CHECK_CONCLUSION"
@@ -181,13 +181,13 @@ jobs:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
           if [ "${{ github.event_name }}" == "deployment_status" ]; then
-            CONTENT="🚀 **Deployment Status: ${DEPLOY_STATUS^^}** in `$REPOSITORY`
+            CONTENT="🚀 **Deployment Status: ${DEPLOY_STATUS^^}** in \`$REPOSITORY\`
 
-            Environment: `$DEPLOY_ENV`"
+            Environment: \`$DEPLOY_ENV\`"
           else
-            CONTENT="🚀 **Deployment Created** in `$REPOSITORY`
+            CONTENT="🚀 **Deployment Created** in \`$REPOSITORY\`
 
-            Environment: `$DEPLOY_ENV`"
+            Environment: \`$DEPLOY_ENV\`"
           fi
           PAYLOAD=$(jq -n --arg content "$CONTENT" '{"content": $content}')
           curl -X POST \
