@@ -12,7 +12,7 @@ ratatui = "0.30.0"
 crossterm = "0.29.0"
 rusqlite = { version = "0.37.0", features = ["bundled"] }
 tokio = { version = "1.50.0", features = ["full"] }
-unicode-segmentation = "1.10"
+unicode-segmentation = "1.13"
 dotenv = "0.15"
 secrecy = { version = "0.10.3", features = ["serde"] }
 zeroize = "1.8"
