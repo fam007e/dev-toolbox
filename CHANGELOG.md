@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
  - **Connection Pooling**: Shifted to a shared `reqwest::Client` with per-request authentication scheme (`Bearer`).
  - **Test Robustness**: Resolved race conditions in secret-loading tests using `serial_test`.
  - **CI/CD Pinning**: All GitHub actions pinned to immutable SHAs for maximum supply-chain security.
+ - **Strict Code Quality**: Achieved 100% Clippy compliance across the entire codebase.
  
  ### Performance
  - **Optimized Response Handling**: Added 10,000-character truncation to HTTP bodies for memory and rendering efficiency.

@@ -28,7 +28,7 @@ All tools must implement the `Tool` trait.
        fn handle_input(
            &mut self,
            key: KeyEvent,
-       ) -> Pin<Box<dyn Future<Output = Result<String, Box<dyn Error>>> + Send + '_>> {
+       ) -> ToolFuture<'_> {
            Box::pin(async move {
                Ok("Success".into())
            })
