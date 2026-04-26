@@ -12,6 +12,6 @@
     - [JWT Decoder](jwt_decoder.md)
 
 - [Developer Guide]()
-    - [Contributing](../CONTRIBUTING.md)
-    - [Security](../SECURITY.md)
-    - [Changelog](../CHANGELOG.md)
+    - [Contributing](CONTRIBUTING.md)
+    - [Security](SECURITY.md)
+    - [Changelog](CHANGELOG.md)

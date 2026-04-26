@@ -38,3 +38,9 @@ Thumbs.db
 UnicodeData.txt
 Blocks.txt
 EmojiSources.txt
+# --- Documentation ---
+/book/
+docs/introduction.md
+docs/CONTRIBUTING.md
+docs/SECURITY.md
+docs/CHANGELOG.md

@@ -26,7 +26,12 @@ jobs:
           echo "$(pwd)/bin" >> $GITHUB_PATH
 
       - name: Build with mdBook
-        run: mdbook build
+        run: |
+          cp README.md docs/introduction.md
+          cp CONTRIBUTING.md docs/CONTRIBUTING.md
+          cp SECURITY.md docs/SECURITY.md
+          cp CHANGELOG.md docs/CHANGELOG.md
+          mdbook build
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4.0.0
