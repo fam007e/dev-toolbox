@@ -15,13 +15,11 @@ use std::sync::{Arc, Mutex};
 pub struct RepoExplorerTool {
     input: String,
     results: Vec<Repository>,
-    #[allow(dead_code)]
     db: Arc<Mutex<Database>>,
-    #[allow(dead_code)]
     client: Client,
-    #[allow(dead_code)]
     secrets: Secrets,
     loading: bool,
+    scope_warning: Option<String>,
 }
 
 use secrecy::ExposeSecret;
@@ -39,6 +37,7 @@ impl RepoExplorerTool {
             client: client.clone(),
             secrets: secrets.clone(),
             loading: false,
+            scope_warning: None,
         })
     }
 
@@ -59,6 +58,9 @@ impl RepoExplorerTool {
             self.loading = false;
             return Err(format!("GitHub API error: {}", resp.status()).into());
         }
+
+        // Check scopes
+        self.scope_warning = crate::github::check_token_scopes(resp.headers());
 
         let mut repos: Vec<Repository> = resp.json().await?;
 
@@ -88,9 +90,9 @@ impl RepoExplorerTool {
     }
 }
 
-use async_trait::async_trait;
+use std::future::Future;
+use std::pin::Pin;
 
-#[async_trait]
 impl super::Tool for RepoExplorerTool {
     fn name(&self) -> &'static str {
         "Repo Explorer"
@@ -106,9 +108,23 @@ impl super::Tool for RepoExplorerTool {
             return;
         }
 
+        let mut constraints = vec![
+            Constraint::Length(3),
+        ];
+
+        let warning_idx = if self.scope_warning.is_some() {
+            constraints.push(Constraint::Length(3));
+            Some(constraints.len() - 1)
+        } else {
+            None
+        };
+
+        constraints.push(Constraint::Min(0));
+        let results_idx = constraints.len() - 1;
+
         let chunks = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Length(3), Constraint::Min(0)])
+            .constraints(constraints)
             .split(area);
 
         let input = Paragraph::new(self.input.as_str()).block(
@@ -121,6 +137,13 @@ impl super::Tool for RepoExplorerTool {
         );
         f.render_widget(input, chunks[0]);
 
+        if let (Some(warning), Some(idx)) = (&self.scope_warning, warning_idx) {
+            let warning_para = Paragraph::new(warning.as_str())
+                .style(Style::default().fg(Color::Yellow))
+                .block(Block::default().borders(Borders::ALL).title("Security Note"));
+            f.render_widget(warning_para, chunks[idx]);
+        }
+
         let results =
             Paragraph::new(
                 self.results
@@ -131,28 +154,42 @@ impl super::Tool for RepoExplorerTool {
             .block(Block::default().borders(Borders::ALL).title(Line::from(
                 Span::styled("Repo Results", Style::default().fg(Color::Green)),
             )));
-        f.render_widget(results, chunks[1]);
+        f.render_widget(results, chunks[results_idx]);
     }
 
-    async fn handle_input(&mut self, key: KeyEvent) -> Result<String, Box<dyn Error>> {
-        match key.code {
-            KeyCode::Enter => self.fetch_repos().await,
-            KeyCode::Char('e') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                serde_json::to_writer(std::fs::File::create("repo_results.json")?, &self.results)?;
-                Ok("Exported to repo_results.json".into())
+    fn handle_input(
+        &mut self,
+        key: KeyEvent,
+    ) -> Pin<Box<dyn Future<Output = Result<String, Box<dyn Error>>> + Send + '_>> {
+        Box::pin(async move {
+            match key.code {
+                KeyCode::Enter => self.fetch_repos().await,
+                KeyCode::Char('e') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                    serde_json::to_writer(
+                        std::fs::File::create("repo_results.json")?,
+                        &self.results,
+                    )?;
+                    Ok("Exported to repo_results.json".into())
+                }
+                KeyCode::Char(c) => {
+                    self.input.push(c);
+                    Ok("Input updated".into())
+                }
+                KeyCode::Backspace => {
+                    self.input.pop();
+                    Ok("Removed character".into())
+                }
+                _ => Ok(String::new()),
             }
-            KeyCode::Char(c) => {
-                self.input.push(c);
-                Ok("Input updated".into())
-            }
-            KeyCode::Backspace => {
-                self.input.pop();
-                Ok("Removed character".into())
-            }
-            _ => Ok(String::new()),
-        }
+        })
     }
 
+    fn as_persistable(&self) -> Option<&dyn super::Persistable> {
+        Some(self)
+    }
+}
+
+impl super::Persistable for RepoExplorerTool {
     fn save_cache(&self) -> Result<(), Box<dyn Error>> {
         let mut db = self.db.lock().unwrap();
         for repo in &self.results {

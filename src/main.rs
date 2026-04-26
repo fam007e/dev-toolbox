@@ -19,13 +19,19 @@ async fn main() -> Result<(), Box<dyn Error>> {
             Arg::new("env")
                 .long("env")
                 .value_name("ENV_FILE")
-                .help("Path to .env file")
-                .default_value(".env"),
+                .help("Path to .env file"),
+        )
+        .arg(
+            Arg::new("allow-cwd-env")
+                .long("allow-cwd-env")
+                .action(clap::ArgAction::SetTrue)
+                .help("Allow loading .env from current working directory (insecure)"),
         )
         .get_matches();
 
-    let env_path = matches.get_one::<String>("env").unwrap();
-    let secrets = Secrets::load(env_path)?;
+    let env_path = matches.get_one::<String>("env").map(|s| s.as_str());
+    let allow_cwd = matches.get_flag("allow-cwd-env");
+    let secrets = Secrets::load(env_path, allow_cwd)?;
     if secrets.github_token.expose_secret().is_empty() {
         let config_dir = dirs::config_dir()
             .map(|p| p.join("dev-toolbox").join(".env"))

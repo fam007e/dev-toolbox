@@ -32,15 +32,59 @@ impl Config {
         let _ = fs::create_dir_all(&config_dir);
         let config_path = config_dir.join("config.toml");
 
-        if config_path.exists() {
+        let config = if config_path.exists() {
             let content = fs::read_to_string(config_path)?;
             let config: Config = toml::from_str(&content)?;
-            Ok(config)
+            config
         } else {
             let config = Config::default_with_paths();
             let content = toml::to_string(&config)?;
             fs::write(config_path, content)?;
-            Ok(config)
+            config
+        };
+
+        config.validate()?;
+        Ok(config)
+    }
+
+    pub fn validate(&self) -> Result<(), Box<dyn Error>> {
+        let allowed_prefixes = ["https://api.github.com", "https://github.com"];
+        if !allowed_prefixes
+            .iter()
+            .any(|&prefix| self.github_api_base_url.starts_with(prefix))
+        {
+            return Err(format!(
+                "Security Warning: Untrusted GitHub API URL configured: {}. \
+                Only official GitHub API endpoints are allowed for security reasons.",
+                self.github_api_base_url
+            )
+            .into());
         }
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_config_validation_allowed_prefix() {
+        let mut config = Config::default_with_paths();
+        config.github_api_base_url = "https://api.github.com".to_string();
+        assert!(config.validate().is_ok());
+
+        config.github_api_base_url = "https://github.com/enterprise".to_string();
+        assert!(config.validate().is_ok());
+    }
+
+    #[test]
+    fn test_config_validation_disallowed_prefix() {
+        let mut config = Config::default_with_paths();
+        config.github_api_base_url = "http://api.github.com".to_string(); // HTTP not allowed
+        assert!(config.validate().is_err());
+
+        config.github_api_base_url = "https://malicious.com".to_string();
+        assert!(config.validate().is_err());
     }
 }

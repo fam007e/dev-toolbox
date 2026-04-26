@@ -1,8 +1,6 @@
-use crate::db::Database;
 use crate::models::github::Organization;
 use crate::secrets::Secrets;
 use reqwest::Client;
-use std::sync::{Arc, Mutex};
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::{
@@ -15,13 +13,10 @@ use std::error::Error;
 pub struct OrgResearchTool {
     input: InputState,
     results: Vec<Organization>,
-    #[allow(dead_code)]
-    db: Arc<Mutex<Database>>,
-    #[allow(dead_code)]
     client: Client,
-    #[allow(dead_code)]
     secrets: Secrets,
     loading: bool,
+    scope_warning: Option<String>,
 }
 
 struct InputState {
@@ -36,7 +31,6 @@ use secrecy::ExposeSecret;
 
 impl OrgResearchTool {
     pub fn new(
-        db: Arc<Mutex<Database>>,
         client: &Client,
         secrets: &Secrets,
     ) -> Result<Self, Box<dyn Error>> {
@@ -48,10 +42,10 @@ impl OrgResearchTool {
                 allow_no_parent: false,
             },
             results: Vec::new(),
-            db,
             client: client.clone(),
             secrets: secrets.clone(),
             loading: false,
+            scope_warning: None,
         })
     }
 
@@ -79,6 +73,9 @@ impl OrgResearchTool {
             return Err(format!("GitHub API error: {}", resp.status()).into());
         }
 
+        // Check scopes
+        self.scope_warning = crate::github::check_token_scopes(resp.headers());
+
         let search_results: SearchResponse = resp.json().await?;
         self.results = search_results.items;
         self.loading = false;
@@ -86,9 +83,9 @@ impl OrgResearchTool {
     }
 }
 
-use async_trait::async_trait;
+use std::future::Future;
+use std::pin::Pin;
 
-#[async_trait]
 impl super::Tool for OrgResearchTool {
     fn name(&self) -> &'static str {
         "Org Research"
@@ -104,14 +101,25 @@ impl super::Tool for OrgResearchTool {
             return;
         }
 
+        let mut constraints = vec![
+            Constraint::Length(3),
+            Constraint::Length(3),
+            Constraint::Length(3),
+        ];
+
+        let warning_idx = if self.scope_warning.is_some() {
+            constraints.push(Constraint::Length(3));
+            Some(constraints.len() - 1)
+        } else {
+            None
+        };
+
+        constraints.push(Constraint::Min(0));
+        let results_idx = constraints.len() - 1;
+
         let chunks = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([
-                Constraint::Length(3),
-                Constraint::Length(3),
-                Constraint::Length(3),
-                Constraint::Min(0),
-            ])
+            .constraints(constraints)
             .split(area);
 
         let parent_input = Paragraph::new(self.input.parent_org.as_str()).block(
@@ -145,6 +153,13 @@ impl super::Tool for OrgResearchTool {
             )));
         f.render_widget(allow_toggle, chunks[2]);
 
+        if let (Some(warning), Some(idx)) = (&self.scope_warning, warning_idx) {
+            let warning_para = Paragraph::new(warning.as_str())
+                .style(Style::default().fg(Color::Yellow))
+                .block(Block::default().borders(Borders::ALL).title("Security Note"));
+            f.render_widget(warning_para, chunks[idx]);
+        }
+
         let results =
             Paragraph::new(
                 self.results
@@ -155,53 +170,56 @@ impl super::Tool for OrgResearchTool {
             .block(Block::default().borders(Borders::ALL).title(Line::from(
                 Span::styled("Org Results", Style::default().fg(Color::Green)),
             )));
-        f.render_widget(results, chunks[3]);
+        f.render_widget(results, chunks[results_idx]);
     }
 
-    async fn handle_input(&mut self, key: KeyEvent) -> Result<String, Box<dyn Error>> {
-        match key.code {
-            KeyCode::Up => {
-                self.input.current_field = self.input.current_field.saturating_sub(1);
-                Ok("Switched field".into())
-            }
-            KeyCode::Down => {
-                self.input.current_field = (self.input.current_field + 1).min(2);
-                Ok("Switched field".into())
-            }
-            KeyCode::Char('a') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                self.input.allow_no_parent = !self.input.allow_no_parent;
-                Ok(format!("Allow No Parent: {}", self.input.allow_no_parent))
-            }
-            KeyCode::Enter => self.fetch_orgs().await,
-            KeyCode::Char('e') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                serde_json::to_writer(std::fs::File::create("org_results.json")?, &self.results)?;
-                Ok("Exported to org_results.json".into())
-            }
-            KeyCode::Char(c) => {
-                match self.input.current_field {
-                    0 => self.input.parent_org.push(c),
-                    1 => self.input.search_term.push(c),
-                    _ => {}
+    fn handle_input(
+        &mut self,
+        key: KeyEvent,
+    ) -> Pin<Box<dyn Future<Output = Result<String, Box<dyn Error>>> + Send + '_>> {
+        Box::pin(async move {
+            match key.code {
+                KeyCode::Up => {
+                    self.input.current_field = self.input.current_field.saturating_sub(1);
+                    Ok("Switched field".into())
                 }
-                Ok("Input updated".into())
+                KeyCode::Down => {
+                    self.input.current_field = (self.input.current_field + 1).min(2);
+                    Ok("Switched field".into())
+                }
+                KeyCode::Char('a') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                    self.input.allow_no_parent = !self.input.allow_no_parent;
+                    Ok(format!("Allow No Parent: {}", self.input.allow_no_parent))
+                }
+                KeyCode::Enter => self.fetch_orgs().await,
+                KeyCode::Char('e') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                    serde_json::to_writer(
+                        std::fs::File::create("org_results.json")?,
+                        &self.results,
+                    )?;
+                    Ok("Exported to org_results.json".into())
+                }
+                KeyCode::Char(c) => {
+                    match self.input.current_field {
+                        0 => self.input.parent_org.push(c),
+                        1 => self.input.search_term.push(c),
+                        _ => {}
+                    }
+                    Ok("Input updated".into())
+                }
+                KeyCode::Backspace => match self.input.current_field {
+                    0 => {
+                        self.input.parent_org.pop();
+                        Ok("Removed character".into())
+                    }
+                    1 => {
+                        self.input.search_term.pop();
+                        Ok("Removed character".into())
+                    }
+                    _ => Ok("No action".into()),
+                },
+                _ => Ok(String::new()),
             }
-            KeyCode::Backspace => match self.input.current_field {
-                0 => {
-                    self.input.parent_org.pop();
-                    Ok("Removed character".into())
-                }
-                1 => {
-                    self.input.search_term.pop();
-                    Ok("Removed character".into())
-                }
-                _ => Ok("No action".into()),
-            },
-            _ => Ok(String::new()),
-        }
-    }
-
-    fn save_cache(&self) -> Result<(), Box<dyn Error>> {
-        // OrgResearchTool does not save cache to DB
-        Ok(())
+        })
     }
 }

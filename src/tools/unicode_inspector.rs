@@ -12,14 +12,16 @@ use ratatui::{
 };
 use unicode_segmentation::UnicodeSegmentation;
 
-use std::sync::atomic::{AtomicBool, Ordering};
+use crate::tools::LoadState;
+use std::future::Future;
+use std::pin::Pin;
 
 pub struct UnicodeInspectorTool {
     input: InputState,
     results: Vec<UnicodeChar>,
     sequential: bool,
     db: Arc<Mutex<Database>>,
-    is_loading: Arc<AtomicBool>,
+    load_state: Arc<Mutex<LoadState>>,
 }
 
 struct InputState {
@@ -33,16 +35,23 @@ use crate::config::Config;
 
 impl UnicodeInspectorTool {
     pub fn new(db: Arc<Mutex<Database>>, config: &Config) -> Result<Self, Box<dyn Error>> {
-        let is_loading = Arc::new(AtomicBool::new(false));
+        let load_state = Arc::new(Mutex::new(LoadState::Loading));
         let db_clone = Arc::clone(&db);
-        let loading_clone = Arc::clone(&is_loading);
+        let loading_clone = Arc::clone(&load_state);
         let unicode_data_path = config.unicode_data_path.clone();
         let blocks_path = config.blocks_path.clone();
 
         tokio::spawn(async move {
-            loading_clone.store(true, Ordering::SeqCst);
-            let _ = Self::import_data_if_needed(db_clone, unicode_data_path, blocks_path);
-            loading_clone.store(false, Ordering::SeqCst);
+            match Self::import_data_if_needed(db_clone, unicode_data_path, blocks_path) {
+                Ok(_) => {
+                    let mut state = loading_clone.lock().unwrap();
+                    *state = LoadState::Ready;
+                }
+                Err(e) => {
+                    let mut state = loading_clone.lock().unwrap();
+                    *state = LoadState::Failed(e.to_string());
+                }
+            }
         });
 
         Ok(UnicodeInspectorTool {
@@ -55,7 +64,7 @@ impl UnicodeInspectorTool {
             results: Vec::new(),
             sequential: false,
             db,
-            is_loading,
+            load_state,
         })
     }
 
@@ -163,22 +172,32 @@ impl UnicodeInspectorTool {
     }
 }
 
-use async_trait::async_trait;
-
-#[async_trait]
 impl super::Tool for UnicodeInspectorTool {
     fn name(&self) -> &'static str {
         "Unicode Inspector"
     }
 
     fn render(&self, f: &mut Frame, area: Rect) {
-        if self.is_loading.load(Ordering::SeqCst) {
-            let area = f.area();
-            let loading = Paragraph::new("Loading Unicode Database...")
-                .alignment(Alignment::Center)
-                .block(Block::default().borders(Borders::ALL));
-            f.render_widget(loading, area);
-            return;
+        let state = self.load_state.lock().unwrap();
+        match &*state {
+            LoadState::Loading => {
+                let area = f.area();
+                let loading = Paragraph::new("Loading Unicode Database...")
+                    .alignment(Alignment::Center)
+                    .block(Block::default().borders(Borders::ALL));
+                f.render_widget(loading, area);
+                return;
+            }
+            LoadState::Failed(e) => {
+                let area = f.area();
+                let error = Paragraph::new(format!("Failed to load Unicode Database: {}", e))
+                    .alignment(Alignment::Center)
+                    .style(Style::default().fg(Color::Red))
+                    .block(Block::default().borders(Borders::ALL));
+                f.render_widget(error, area);
+                return;
+            }
+            LoadState::Ready => {}
         }
 
         let chunks = Layout::default()
@@ -251,66 +270,67 @@ impl super::Tool for UnicodeInspectorTool {
         f.render_widget(results, chunks[4]);
     }
 
-    async fn handle_input(&mut self, key: KeyEvent) -> Result<String, Box<dyn Error>> {
-        match key.code {
-            KeyCode::Up => {
-                self.input.current_field = self.input.current_field.saturating_sub(1);
-                Ok("Switched field".into())
-            }
-            KeyCode::Down => {
-                self.input.current_field = (self.input.current_field + 1).min(3);
-                Ok("Switched field".into())
-            }
-            KeyCode::Char('a') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                self.sequential = !self.sequential;
-                Ok(format!("Sequential Mode: {}", self.sequential))
-            }
-            KeyCode::Char('l') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                if !self.input.codepoint.is_empty() {
-                    self.lookup_codepoint()
-                } else if !self.input.name.is_empty() {
-                    self.lookup_name()
-                } else {
-                    Ok("No lookup input".into())
+    fn handle_input(
+        &mut self,
+        key: KeyEvent,
+    ) -> Pin<Box<dyn Future<Output = Result<String, Box<dyn Error>>> + Send + '_>> {
+        Box::pin(async move {
+            match key.code {
+                KeyCode::Up => {
+                    self.input.current_field = self.input.current_field.saturating_sub(1);
+                    Ok("Switched field".into())
                 }
+                KeyCode::Down => {
+                    self.input.current_field = (self.input.current_field + 1).min(3);
+                    Ok("Switched field".into())
+                }
+                KeyCode::Char('a') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                    self.sequential = !self.sequential;
+                    Ok(format!("Sequential Mode: {}", self.sequential))
+                }
+                KeyCode::Char('l') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                    if !self.input.codepoint.is_empty() {
+                        self.lookup_codepoint()
+                    } else if !self.input.name.is_empty() {
+                        self.lookup_name()
+                    } else {
+                        Ok("No lookup input".into())
+                    }
+                }
+                KeyCode::Enter => self.analyze_text(),
+                KeyCode::Char('e') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                    serde_json::to_writer(
+                        std::fs::File::create("unicode_results.json")?,
+                        &self.results,
+                    )?;
+                    Ok("Exported to unicode_results.json".into())
+                }
+                KeyCode::Char(c) => {
+                    match self.input.current_field {
+                        0 => self.input.text.push(c),
+                        1 => self.input.codepoint.push(c),
+                        2 => self.input.name.push(c),
+                        _ => {}
+                    }
+                    Ok("Input updated".into())
+                }
+                KeyCode::Backspace => match self.input.current_field {
+                    0 => {
+                        self.input.text.pop();
+                        Ok("Removed character".into())
+                    }
+                    1 => {
+                        self.input.codepoint.pop();
+                        Ok("Removed character".into())
+                    }
+                    2 => {
+                        self.input.name.pop();
+                        Ok("Removed character".into())
+                    }
+                    _ => Ok("No action".into()),
+                },
+                _ => Ok(String::new()),
             }
-            KeyCode::Enter => self.analyze_text(),
-            KeyCode::Char('e') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                serde_json::to_writer(
-                    std::fs::File::create("unicode_results.json")?,
-                    &self.results,
-                )?;
-                Ok("Exported to unicode_results.json".into())
-            }
-            KeyCode::Char(c) => {
-                match self.input.current_field {
-                    0 => self.input.text.push(c),
-                    1 => self.input.codepoint.push(c),
-                    2 => self.input.name.push(c),
-                    _ => {}
-                }
-                Ok("Input updated".into())
-            }
-            KeyCode::Backspace => match self.input.current_field {
-                0 => {
-                    self.input.text.pop();
-                    Ok("Removed character".into())
-                }
-                1 => {
-                    self.input.codepoint.pop();
-                    Ok("Removed character".into())
-                }
-                2 => {
-                    self.input.name.pop();
-                    Ok("Removed character".into())
-                }
-                _ => Ok("No action".into()),
-            },
-            _ => Ok(String::new()),
-        }
-    }
-
-    fn save_cache(&self) -> Result<(), Box<dyn Error>> {
-        Ok(())
+        })
     }
 }

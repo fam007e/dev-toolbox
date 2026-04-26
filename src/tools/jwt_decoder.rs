@@ -46,9 +46,9 @@ impl JwtDecoderTool {
     }
 }
 
-use async_trait::async_trait;
+use std::future::Future;
+use std::pin::Pin;
 
-#[async_trait]
 impl super::Tool for JwtDecoderTool {
     fn name(&self) -> &'static str {
         "JWT Decoder"
@@ -70,44 +70,75 @@ impl super::Tool for JwtDecoderTool {
         );
         f.render_widget(input, chunks[0]);
 
-        let results =
-            Paragraph::new(vec![
-                Line::from(format!(
-                    "Header: {}",
-                    self.header
-                        .as_ref()
-                        .map_or("None".to_string(), |v| v.to_string())
-                )),
-                Line::from(format!(
-                    "Payload: {}",
-                    self.payload
-                        .as_ref()
-                        .map_or("None".to_string(), |v| v.to_string())
-                )),
-            ])
-            .block(Block::default().borders(Borders::ALL).title(Line::from(
-                Span::styled("JWT Results", Style::default().fg(Color::Green)),
-            )));
+        let mut lines = vec![
+            Line::from(Span::styled(
+                "⚠ WARNING: Signature NOT verified. This tool only decodes the payload.",
+                Style::default().fg(Color::Red).bold(),
+            )),
+            Line::from(""),
+        ];
+
+        let header_style = if let Some(h) = &self.header {
+            if h["alg"] == "none" {
+                Style::default().fg(Color::Red).bold()
+            } else {
+                Style::default()
+            }
+        } else {
+            Style::default()
+        };
+
+        lines.push(Line::from(vec![
+            Span::raw("Header: "),
+            Span::styled(
+                self.header
+                    .as_ref()
+                    .map_or("None".to_string(), |v| v.to_string()),
+                header_style,
+            ),
+        ]));
+
+        if let Some(h) = &self.header {
+            if h["alg"] == "none" {
+                lines.push(Line::from(Span::styled(
+                    "  DANGER: 'alg: none' detected. This token is inherently insecure.",
+                    Style::default().fg(Color::Red),
+                )));
+            }
+        }
+
+        lines.push(Line::from(format!(
+            "Payload: {}",
+            self.payload
+                .as_ref()
+                .map_or("None".to_string(), |v| v.to_string())
+        )));
+
+        let results = Paragraph::new(lines).block(Block::default().borders(Borders::ALL).title(
+            Line::from(Span::styled("JWT Results", Style::default().fg(Color::Green))),
+        ));
         f.render_widget(results, chunks[1]);
     }
 
-    async fn handle_input(&mut self, key: KeyEvent) -> Result<String, Box<dyn Error>> {
-        match key.code {
-            KeyCode::Char(c) => {
-                self.input.push(c);
-                Ok("Input updated".into())
-            }
-            KeyCode::Backspace => {
-                self.input.pop();
-                Ok("Removed character".into())
-            }
-            KeyCode::Enter => self.decode_jwt(),
-            _ => Ok(String::new()),
-        }
-    }
 
-    fn save_cache(&self) -> Result<(), Box<dyn Error>> {
-        Ok(())
+    fn handle_input(
+        &mut self,
+        key: KeyEvent,
+    ) -> Pin<Box<dyn Future<Output = Result<String, Box<dyn Error>>> + Send + '_>> {
+        Box::pin(async move {
+            match key.code {
+                KeyCode::Char(c) => {
+                    self.input.push(c);
+                    Ok("Input updated".into())
+                }
+                KeyCode::Backspace => {
+                    self.input.pop();
+                    Ok("Removed character".into())
+                }
+                KeyCode::Enter => self.decode_jwt(),
+                _ => Ok(String::new()),
+            }
+        })
     }
 }
 
