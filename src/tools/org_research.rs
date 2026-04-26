@@ -1,6 +1,7 @@
 use crate::models::github::Organization;
 use crate::secrets::Secrets;
 use reqwest::Client;
+use std::error::Error;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::{
@@ -8,7 +9,6 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph},
 };
 use serde_json;
-use std::error::Error;
 
 pub struct OrgResearchTool {
     input: InputState,
@@ -79,9 +79,6 @@ impl OrgResearchTool {
         Ok(format!("Found {} organizations", self.results.len()))
     }
 }
-
-use std::future::Future;
-use std::pin::Pin;
 
 impl super::Tool for OrgResearchTool {
     fn name(&self) -> &'static str {
@@ -174,10 +171,7 @@ impl super::Tool for OrgResearchTool {
         f.render_widget(results, chunks[results_idx]);
     }
 
-    fn handle_input(
-        &mut self,
-        key: KeyEvent,
-    ) -> Pin<Box<dyn Future<Output = Result<String, Box<dyn Error>>> + Send + '_>> {
+    fn handle_input(&mut self, key: KeyEvent) -> crate::tools::ToolFuture<'_> {
         Box::pin(async move {
             match key.code {
                 KeyCode::Up => {

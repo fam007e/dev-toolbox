@@ -6,8 +6,6 @@ use ratatui::{
 };
 use reqwest::Client;
 use std::error::Error;
-use std::future::Future;
-use std::pin::Pin;
 
 use std::sync::{Arc, Mutex};
 
@@ -241,10 +239,7 @@ impl super::Tool for TokenInspectorTool {
         f.render_widget(results, chunks[1]);
     }
 
-    fn handle_input(
-        &mut self,
-        key: KeyEvent,
-    ) -> Pin<Box<dyn Future<Output = Result<String, Box<dyn Error>>> + Send + '_>> {
+    fn handle_input(&mut self, key: KeyEvent) -> crate::tools::ToolFuture<'_> {
         // We need to clone state for the async move block
         let mut tool_clone = self.clone_state();
         Box::pin(async move {

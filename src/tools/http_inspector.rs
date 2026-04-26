@@ -5,8 +5,6 @@ use ratatui::{
 };
 use reqwest::{Client, Method};
 use std::error::Error;
-use std::future::Future;
-use std::pin::Pin;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum HttpMethod {
@@ -174,10 +172,7 @@ impl super::Tool for HttpRequestInspectorTool {
         f.render_widget(result_para, chunks[1]);
     }
 
-    fn handle_input(
-        &mut self,
-        key: KeyEvent,
-    ) -> Pin<Box<dyn Future<Output = Result<String, Box<dyn Error>>> + Send + '_>> {
+    fn handle_input(&mut self, key: KeyEvent) -> crate::tools::ToolFuture<'_> {
         Box::pin(async move {
             match key.code {
                 KeyCode::Char('m') if key.modifiers.contains(KeyModifiers::CONTROL) => {

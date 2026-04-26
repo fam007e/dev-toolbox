@@ -46,9 +46,6 @@ impl JwtDecoderTool {
     }
 }
 
-use std::future::Future;
-use std::pin::Pin;
-
 impl super::Tool for JwtDecoderTool {
     fn name(&self) -> &'static str {
         "JWT Decoder"
@@ -121,10 +118,7 @@ impl super::Tool for JwtDecoderTool {
         f.render_widget(results, chunks[1]);
     }
 
-    fn handle_input(
-        &mut self,
-        key: KeyEvent,
-    ) -> Pin<Box<dyn Future<Output = Result<String, Box<dyn Error>>> + Send + '_>> {
+    fn handle_input(&mut self, key: KeyEvent) -> crate::tools::ToolFuture<'_> {
         Box::pin(async move {
             match key.code {
                 KeyCode::Char(c) => {

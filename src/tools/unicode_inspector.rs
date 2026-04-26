@@ -13,8 +13,6 @@ use ratatui::{
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::tools::LoadState;
-use std::future::Future;
-use std::pin::Pin;
 
 pub struct UnicodeInspectorTool {
     input: InputState,
@@ -270,10 +268,7 @@ impl super::Tool for UnicodeInspectorTool {
         f.render_widget(results, chunks[4]);
     }
 
-    fn handle_input(
-        &mut self,
-        key: KeyEvent,
-    ) -> Pin<Box<dyn Future<Output = Result<String, Box<dyn Error>>> + Send + '_>> {
+    fn handle_input(&mut self, key: KeyEvent) -> crate::tools::ToolFuture<'_> {
         Box::pin(async move {
             match key.code {
                 KeyCode::Up => {
