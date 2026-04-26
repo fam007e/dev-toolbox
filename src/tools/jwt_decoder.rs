@@ -114,12 +114,12 @@ impl super::Tool for JwtDecoderTool {
                 .map_or("None".to_string(), |v| v.to_string())
         )));
 
-        let results = Paragraph::new(lines).block(Block::default().borders(Borders::ALL).title(
-            Line::from(Span::styled("JWT Results", Style::default().fg(Color::Green))),
-        ));
+        let results =
+            Paragraph::new(lines).block(Block::default().borders(Borders::ALL).title(Line::from(
+                Span::styled("JWT Results", Style::default().fg(Color::Green)),
+            )));
         f.render_widget(results, chunks[1]);
     }
-
 
     fn handle_input(
         &mut self,

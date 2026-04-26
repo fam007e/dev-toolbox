@@ -108,9 +108,7 @@ impl super::Tool for RepoExplorerTool {
             return;
         }
 
-        let mut constraints = vec![
-            Constraint::Length(3),
-        ];
+        let mut constraints = vec![Constraint::Length(3)];
 
         let warning_idx = if self.scope_warning.is_some() {
             constraints.push(Constraint::Length(3));
@@ -140,7 +138,11 @@ impl super::Tool for RepoExplorerTool {
         if let (Some(warning), Some(idx)) = (&self.scope_warning, warning_idx) {
             let warning_para = Paragraph::new(warning.as_str())
                 .style(Style::default().fg(Color::Yellow))
-                .block(Block::default().borders(Borders::ALL).title("Security Note"));
+                .block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .title("Security Note"),
+                );
             f.render_widget(warning_para, chunks[idx]);
         }
 

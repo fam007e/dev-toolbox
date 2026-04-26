@@ -62,7 +62,8 @@ impl TokenInspectorTool {
         use secrecy::ExposeSecret;
         let token = self.secrets.github_token.expose_secret();
         if token.is_empty() {
-            *self.error.lock().unwrap() = Some("No GitHub token configured. Please check your .env file.".into());
+            *self.error.lock().unwrap() =
+                Some("No GitHub token configured. Please check your .env file.".into());
             return Ok("Missing token".into());
         }
 
@@ -115,9 +116,15 @@ impl TokenInspectorTool {
         }
 
         let rate_json: serde_json::Value = rate_resp.json().await?;
-        let core_limit = rate_json["resources"]["core"]["limit"].as_u64().unwrap_or(0) as u32;
-        let core_remaining = rate_json["resources"]["core"]["remaining"].as_u64().unwrap_or(0) as u32;
-        let core_reset = rate_json["resources"]["core"]["reset"].as_i64().unwrap_or(0);
+        let core_limit = rate_json["resources"]["core"]["limit"]
+            .as_u64()
+            .unwrap_or(0) as u32;
+        let core_remaining = rate_json["resources"]["core"]["remaining"]
+            .as_u64()
+            .unwrap_or(0) as u32;
+        let core_reset = rate_json["resources"]["core"]["reset"]
+            .as_i64()
+            .unwrap_or(0);
 
         *self.results.lock().unwrap() = Some(TokenInfo {
             owner_login,
@@ -201,11 +208,17 @@ impl super::Tool for TokenInspectorTool {
             lines.push(Line::from(""));
             lines.push(Line::from(vec![
                 Span::styled("Rate Limit:  ", Style::default().bold()),
-                Span::raw(format!("{}/{}", info.rate_limit_remaining, info.rate_limit_limit)),
+                Span::raw(format!(
+                    "{}/{}",
+                    info.rate_limit_remaining, info.rate_limit_limit
+                )),
             ]));
-            
+
             use std::time::{SystemTime, UNIX_EPOCH};
-            let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64;
+            let now = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs() as i64;
             let reset_in = info.rate_limit_reset - now;
             let reset_str = if reset_in > 0 {
                 format!("{} minutes", reset_in / 60)
@@ -221,9 +234,10 @@ impl super::Tool for TokenInspectorTool {
             lines.push(Line::from("No token info loaded yet."));
         }
 
-        let results = Paragraph::new(lines).block(Block::default().borders(Borders::ALL).title(
-            Line::from(Span::styled("Token Information", Style::default().fg(Color::Cyan))),
-        ));
+        let results =
+            Paragraph::new(lines).block(Block::default().borders(Borders::ALL).title(Line::from(
+                Span::styled("Token Information", Style::default().fg(Color::Cyan)),
+            )));
         f.render_widget(results, chunks[1]);
     }
 

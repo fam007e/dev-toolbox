@@ -1,6 +1,9 @@
 use crate::db::Database;
 use crate::secrets::Secrets;
-use crate::tools::{EncoderDecoderTool, HttpRequestInspectorTool, JwtDecoderTool, OrgResearchTool, RepoExplorerTool, TokenInspectorTool, Tool, UnicodeInspectorTool};
+use crate::tools::{
+    EncoderDecoderTool, HttpRequestInspectorTool, JwtDecoderTool, OrgResearchTool,
+    RepoExplorerTool, TokenInspectorTool, Tool, UnicodeInspectorTool,
+};
 use arboard::Clipboard;
 use crossterm::event::{Event, KeyCode, MouseButton, MouseEventKind};
 use ratatui::{
@@ -173,10 +176,15 @@ impl App {
                             }
                             KeyCode::Down => {
                                 if !self.search_results.is_empty() {
-                                    self.search_selected = (self.search_selected + 1).min(self.search_results.len().saturating_sub(1));
+                                    self.search_selected = (self.search_selected + 1)
+                                        .min(self.search_results.len().saturating_sub(1));
                                 }
                             }
-                            KeyCode::Char(c) if !key.modifiers.contains(crossterm::event::KeyModifiers::CONTROL) => {
+                            KeyCode::Char(c)
+                                if !key
+                                    .modifiers
+                                    .contains(crossterm::event::KeyModifiers::CONTROL) =>
+                            {
                                 self.search_query.push(c);
                                 self.update_search();
                             }
@@ -188,26 +196,44 @@ impl App {
                         }
                     } else {
                         match key.code {
-                            KeyCode::Char('f') if key.modifiers.contains(crossterm::event::KeyModifiers::CONTROL) => {
+                            KeyCode::Char('f')
+                                if key
+                                    .modifiers
+                                    .contains(crossterm::event::KeyModifiers::CONTROL) =>
+                            {
                                 self.search_mode = true;
                                 self.search_query.clear();
                                 self.update_search();
                             }
-                            KeyCode::Char('q') if key.modifiers.contains(crossterm::event::KeyModifiers::CONTROL) => break,
-                            KeyCode::Char('c') if key.modifiers.contains(crossterm::event::KeyModifiers::CONTROL) => {
+                            KeyCode::Char('q')
+                                if key
+                                    .modifiers
+                                    .contains(crossterm::event::KeyModifiers::CONTROL) =>
+                            {
+                                break
+                            }
+                            KeyCode::Char('c')
+                                if key
+                                    .modifiers
+                                    .contains(crossterm::event::KeyModifiers::CONTROL) =>
+                            {
                                 if let Ok(mut clipboard) = Clipboard::new() {
                                     let _ = clipboard.set_text(self.message.clone());
-                                    self.message = "Copied to clipboard! (Cleared in 30s)".to_string();
+                                    self.message =
+                                        "Copied to clipboard! (Cleared in 30s)".to_string();
 
                                     tokio::spawn(async move {
-                                        tokio::time::sleep(tokio::time::Duration::from_secs(30)).await;
+                                        tokio::time::sleep(tokio::time::Duration::from_secs(30))
+                                            .await;
                                         if let Ok(mut cb) = Clipboard::new() {
                                             let _ = cb.set_text("".to_string());
                                         }
                                     });
                                 }
                             }
-                            KeyCode::Tab => self.tab_index = (self.tab_index + 1) % self.tools.len(),
+                            KeyCode::Tab => {
+                                self.tab_index = (self.tab_index + 1) % self.tools.len()
+                            }
                             _ => {
                                 self.message = self.tools[self.tab_index]
                                     .handle_input(key)
@@ -216,7 +242,7 @@ impl App {
                             }
                         }
                     }
-                },
+                }
                 Event::Mouse(mouse) => {
                     if mouse.kind == MouseEventKind::Down(MouseButton::Left) && mouse.row == 1 {
                         let tab_width = terminal.size()?.width / self.tools.len() as u16;

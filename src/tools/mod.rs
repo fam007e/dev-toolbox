@@ -4,21 +4,21 @@ use std::error::Error;
 use std::future::Future;
 use std::pin::Pin;
 
+pub mod encoder_decoder;
+pub mod http_inspector;
 pub mod jwt_decoder;
 pub mod org_research;
 pub mod repo_explorer;
-pub mod unicode_inspector;
 pub mod token_inspector;
-pub mod encoder_decoder;
-pub mod http_inspector;
+pub mod unicode_inspector;
 
+pub use encoder_decoder::EncoderDecoderTool;
+pub use http_inspector::HttpRequestInspectorTool;
 pub use jwt_decoder::JwtDecoderTool;
 pub use org_research::OrgResearchTool;
 pub use repo_explorer::RepoExplorerTool;
-pub use unicode_inspector::UnicodeInspectorTool;
 pub use token_inspector::TokenInspectorTool;
-pub use encoder_decoder::EncoderDecoderTool;
-pub use http_inspector::HttpRequestInspectorTool;
+pub use unicode_inspector::UnicodeInspectorTool;
 
 pub trait Tool: Send + Sync {
     fn name(&self) -> &'static str;

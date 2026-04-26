@@ -30,10 +30,7 @@ use crate::models::github::SearchResponse;
 use secrecy::ExposeSecret;
 
 impl OrgResearchTool {
-    pub fn new(
-        client: &Client,
-        secrets: &Secrets,
-    ) -> Result<Self, Box<dyn Error>> {
+    pub fn new(client: &Client, secrets: &Secrets) -> Result<Self, Box<dyn Error>> {
         Ok(OrgResearchTool {
             input: InputState {
                 parent_org: String::new(),
@@ -156,7 +153,11 @@ impl super::Tool for OrgResearchTool {
         if let (Some(warning), Some(idx)) = (&self.scope_warning, warning_idx) {
             let warning_para = Paragraph::new(warning.as_str())
                 .style(Style::default().fg(Color::Yellow))
-                .block(Block::default().borders(Borders::ALL).title("Security Note"));
+                .block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .title("Security Note"),
+                );
             f.render_widget(warning_para, chunks[idx]);
         }
 

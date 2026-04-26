@@ -50,8 +50,8 @@ impl Drop for Secrets {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs;
     use std::env;
+    use std::fs;
 
     #[test]
     #[serial_test::serial]
@@ -66,7 +66,7 @@ mod tests {
         env::remove_var("GITHUB_TOKEN");
 
         let secrets = Secrets::load(None, false).unwrap();
-        
+
         env::set_current_dir(original_dir).unwrap();
 
         use secrecy::ExposeSecret;
@@ -85,7 +85,7 @@ mod tests {
         env::remove_var("GITHUB_TOKEN");
 
         let secrets = Secrets::load(None, true).unwrap();
-        
+
         env::set_current_dir(original_dir).unwrap();
 
         use secrecy::ExposeSecret;

@@ -25,7 +25,7 @@ impl HttpMethod {
             HttpMethod::Delete => HttpMethod::Get,
         }
     }
-    
+
     fn as_reqwest_method(&self) -> Method {
         match self {
             HttpMethod::Get => Method::GET,
@@ -34,7 +34,7 @@ impl HttpMethod {
             HttpMethod::Delete => Method::DELETE,
         }
     }
-    
+
     fn as_str(&self) -> &'static str {
         match self {
             HttpMethod::Get => "GET",
@@ -72,21 +72,28 @@ impl HttpRequestInspectorTool {
         }
 
         self.loading = true;
-        
-        let request = self.client.request(self.method.as_reqwest_method(), &self.url);
+
+        let request = self
+            .client
+            .request(self.method.as_reqwest_method(), &self.url);
         let resp = request.send().await;
 
         self.loading = false;
-        
+
         match resp {
             Ok(r) => {
                 self.status = Some(r.status().as_u16());
-                let headers = r.headers().iter()
+                let headers = r
+                    .headers()
+                    .iter()
                     .map(|(k, v)| format!("{}: {}", k.as_str(), v.to_str().unwrap_or("[binary]")))
                     .collect::<Vec<_>>()
                     .join("\n");
-                
-                let mut body = r.text().await.unwrap_or_else(|_| "[Unreadable Body]".into());
+
+                let mut body = r
+                    .text()
+                    .await
+                    .unwrap_or_else(|_| "[Unreadable Body]".into());
                 if body.chars().count() > 10_000 {
                     body = body.chars().take(10_000).collect::<String>();
                     body.push_str("\n...[truncated]");
@@ -124,28 +131,34 @@ impl super::Tool for HttpRequestInspectorTool {
 
         let input_line = Line::from(vec![
             Span::raw("Method [Ctrl+M]: "),
-            Span::styled(self.method.as_str(), Style::default().fg(Color::Yellow).bold()),
+            Span::styled(
+                self.method.as_str(),
+                Style::default().fg(Color::Yellow).bold(),
+            ),
             Span::raw(" | URL: "),
             Span::styled(&self.url, Style::default().fg(Color::White)),
         ]);
-        
-        let input_para = Paragraph::new(input_line).block(
-            Block::default()
-                .borders(Borders::ALL)
-                .title(Line::from(Span::styled("Request", Style::default().fg(Color::Green)))),
-        );
+
+        let input_para =
+            Paragraph::new(input_line).block(Block::default().borders(Borders::ALL).title(
+                Line::from(Span::styled("Request", Style::default().fg(Color::Green))),
+            ));
         f.render_widget(input_para, chunks[0]);
 
         let mut res_lines = vec![];
         if let Some(status) = self.status {
-            let color = if status >= 200 && status < 300 { Color::Green } else { Color::Red };
+            let color = if status >= 200 && status < 300 {
+                Color::Green
+            } else {
+                Color::Red
+            };
             res_lines.push(Line::from(vec![
                 Span::styled("Status: ", Style::default().bold()),
                 Span::styled(status.to_string(), Style::default().fg(color).bold()),
             ]));
             res_lines.push(Line::from(""));
         }
-        
+
         if let Some(resp) = &self.response {
             for line in resp.lines() {
                 res_lines.push(Line::from(line.to_string()));
@@ -154,11 +167,10 @@ impl super::Tool for HttpRequestInspectorTool {
             res_lines.push(Line::from("No request sent yet."));
         }
 
-        let result_para = Paragraph::new(res_lines).block(
-            Block::default()
-                .borders(Borders::ALL)
-                .title(Line::from(Span::styled("Response", Style::default().fg(Color::Cyan)))),
-        );
+        let result_para =
+            Paragraph::new(res_lines).block(Block::default().borders(Borders::ALL).title(
+                Line::from(Span::styled("Response", Style::default().fg(Color::Cyan))),
+            ));
         f.render_widget(result_para, chunks[1]);
     }
 

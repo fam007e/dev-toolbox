@@ -26,7 +26,7 @@ impl Format {
             Format::Url => "URL",
         }
     }
-    
+
     fn next(&self) -> Self {
         match self {
             Format::Base64 => Format::Hex,
@@ -61,23 +61,18 @@ impl EncoderDecoderTool {
 
         let res = match (self.format, self.is_encode) {
             (Format::Base64, true) => Ok(b64.encode(&self.input)),
-            (Format::Base64, false) => {
-                b64.decode(&self.input)
-                    .map_err(|e| e.to_string())
-                    .and_then(|bytes| String::from_utf8(bytes).map_err(|e| e.to_string()))
-            }
+            (Format::Base64, false) => b64
+                .decode(&self.input)
+                .map_err(|e| e.to_string())
+                .and_then(|bytes| String::from_utf8(bytes).map_err(|e| e.to_string())),
             (Format::Hex, true) => Ok(hex::encode(&self.input)),
-            (Format::Hex, false) => {
-                hex::decode(&self.input)
-                    .map_err(|e| e.to_string())
-                    .and_then(|bytes| String::from_utf8(bytes).map_err(|e| e.to_string()))
-            }
+            (Format::Hex, false) => hex::decode(&self.input)
+                .map_err(|e| e.to_string())
+                .and_then(|bytes| String::from_utf8(bytes).map_err(|e| e.to_string())),
             (Format::Url, true) => Ok(urlencoding::encode(&self.input).into_owned()),
-            (Format::Url, false) => {
-                urlencoding::decode(&self.input)
-                    .map_err(|e| e.to_string())
-                    .map(|s| s.into_owned())
-            }
+            (Format::Url, false) => urlencoding::decode(&self.input)
+                .map_err(|e| e.to_string())
+                .map(|s| s.into_owned()),
         };
         self.result = Some(res);
     }
@@ -91,7 +86,11 @@ impl super::Tool for EncoderDecoderTool {
     fn render(&self, f: &mut Frame, area: Rect) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Length(3), Constraint::Length(3), Constraint::Min(0)])
+            .constraints([
+                Constraint::Length(3),
+                Constraint::Length(3),
+                Constraint::Min(0),
+            ])
             .split(area);
 
         let config_line = Line::from(vec![
@@ -101,7 +100,10 @@ impl super::Tool for EncoderDecoderTool {
                 Style::default().fg(Color::Yellow).bold(),
             ),
             Span::raw(" | Format: "),
-            Span::styled(self.format.name(), Style::default().fg(Color::Yellow).bold()),
+            Span::styled(
+                self.format.name(),
+                Style::default().fg(Color::Yellow).bold(),
+            ),
             Span::raw(" | [Ctrl+M] Toggle Mode | [Ctrl+T] Toggle Format"),
         ]);
         let config_para = Paragraph::new(config_line).block(Block::default().borders(Borders::ALL));
@@ -110,7 +112,10 @@ impl super::Tool for EncoderDecoderTool {
         let input_para = Paragraph::new(self.input.as_str()).block(
             Block::default()
                 .borders(Borders::ALL)
-                .title(Line::from(Span::styled("Input", Style::default().fg(Color::Green)))),
+                .title(Line::from(Span::styled(
+                    "Input",
+                    Style::default().fg(Color::Green),
+                ))),
         );
         f.render_widget(input_para, chunks[1]);
 
@@ -128,7 +133,10 @@ impl super::Tool for EncoderDecoderTool {
         let result_para = Paragraph::new(result_content).style(result_style).block(
             Block::default()
                 .borders(Borders::ALL)
-                .title(Line::from(Span::styled("Result", Style::default().fg(Color::Cyan)))),
+                .title(Line::from(Span::styled(
+                    "Result",
+                    Style::default().fg(Color::Cyan),
+                ))),
         );
         f.render_widget(result_para, chunks[2]);
     }
@@ -142,7 +150,10 @@ impl super::Tool for EncoderDecoderTool {
                 KeyCode::Char('m') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                     self.is_encode = !self.is_encode;
                     self.process();
-                    Ok(format!("Mode toggled to {}", if self.is_encode { "Encode" } else { "Decode" }))
+                    Ok(format!(
+                        "Mode toggled to {}",
+                        if self.is_encode { "Encode" } else { "Decode" }
+                    ))
                 }
                 KeyCode::Char('t') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                     self.format = self.format.next();
