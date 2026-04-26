@@ -1,6 +1,8 @@
 # Dev-Toolbox
 
 A modular and extensible CLI toolbox for developers, built with Rust. This application provides a collection of tools to streamline common development tasks, from analyzing GitHub repositories to inspecting Unicode characters.
+ 
+ **[🌐 View Online Documentation](https://fam007e.github.io/dev-toolbox/)**
 
 ## Features
 

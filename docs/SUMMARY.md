@@ -12,6 +12,8 @@
     - [JWT Decoder](jwt_decoder.md)
 
 - [Developer Guide]()
+    - [Wiki](WIKI.md)
     - [Contributing](CONTRIBUTING.md)
     - [Security](SECURITY.md)
     - [Changelog](CHANGELOG.md)
+    - [Code of Conduct](CODE_OF_CONDUCT.md)

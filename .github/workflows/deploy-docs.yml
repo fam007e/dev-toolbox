@@ -7,13 +7,26 @@ on:
     paths:
       - 'docs/**'
       - 'book.toml'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+      - 'SECURITY.md'
+      - 'CHANGELOG.md'
       - '.github/workflows/deploy-docs.yml'
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -25,16 +38,26 @@ jobs:
           curl -sSL https://github.com/rust-lang/mdBook/releases/download/v0.4.40/mdbook-v0.4.40-x86_64-unknown-linux-gnu.tar.gz | tar -xzC bin
           echo "$(pwd)/bin" >> $GITHUB_PATH
 
-      - name: Build with mdBook
+      - name: Prepare docs
         run: |
-          cp README.md docs/introduction.md
+          # Copy files and fix links (remove docs/ prefix because they are now in the docs folder)
+          sed 's|docs/||g' README.md > docs/introduction.md
           cp CONTRIBUTING.md docs/CONTRIBUTING.md
           cp SECURITY.md docs/SECURITY.md
           cp CHANGELOG.md docs/CHANGELOG.md
-          mdbook build
+          cp CODE_OF_CONDUCT.md docs/CODE_OF_CONDUCT.md
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Build with mdBook
+        run: mdbook build
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./book
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4.0.0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./book
+        id: deployment
+        uses: actions/deploy-pages@v4
