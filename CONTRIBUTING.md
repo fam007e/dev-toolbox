@@ -18,16 +18,21 @@ We welcome contributions to the Dev-Toolbox! This guide will help you get starte
 
 ## Creating a New Tool
 
-All tools must implement the `async_trait` version of the `Tool` trait.
+All tools must implement the `Tool` trait.
 
 1. **Implement the Trait:**
    ```rust
-   #[async_trait]
    impl Tool for MyTool {
        fn name(&self) -> &'static str { "My Tool" }
        fn render(&self, f: &mut Frame, area: Rect) { ... }
-       async fn handle_input(&mut self, key: KeyEvent) -> Result<String, Box<dyn Error>> { ... }
-       fn save_cache(&self) -> Result<(), Box<dyn Error>> { ... }
+       fn handle_input(
+           &mut self,
+           key: KeyEvent,
+       ) -> Pin<Box<dyn Future<Output = Result<String, Box<dyn Error>>> + Send + '_>> {
+           Box::pin(async move {
+               Ok("Success".into())
+           })
+       }
    }
    ```
 2. **Configuration:** Use the `Config` struct to avoid hardcoding paths.

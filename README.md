@@ -6,6 +6,7 @@ A modular and extensible CLI toolbox for developers, built with Rust. This appli
 
 - **Modular Design:** Easily extend the toolbox by adding new tools that implement the `Tool` trait.
 - **Cross-Platform:** Builds and runs on both Windows and Linux.
+- **Global Search:** Press `Ctrl+F` at any time to open the tool search palette.
 - **Mouse and Touchpad Support:** Navigate between tabs with a simple click or tap.
 
 ## Available Tools
@@ -15,6 +16,9 @@ Detailed documentation for each tool can be found in the [Wiki](docs/WIKI.md).
 - **[Org Research](docs/org_research.md):** Get insights into a GitHub organization's public repositories, including language statistics and license information.
 - **[Repo Explorer](docs/repo_explorer.md):** Explore the contents of a public GitHub repository, view file details, and see a breakdown of the languages used.
 - **[Unicode Inspector](docs/unicode_inspector.md):** Look up Unicode characters by their code point and view detailed information about them.
+- **[Token Inspector](docs/token_inspector.md):** View information about your GitHub Personal Access Token, including its owner, scopes, and remaining rate limits.
+- **[Encoder/Decoder](docs/encoder_decoder.md):** Encode or decode strings using Base64, Hex, or URL encoding.
+- **[HTTP Inspector](docs/http_inspector.md):** Perform arbitrary HTTP requests and inspect the response headers and body.
 - **[JWT Decoder](docs/jwt_decoder.md):** Decode JSON Web Tokens to inspect their header and payload.
 
 ## Getting Started
@@ -64,6 +68,8 @@ You can modify this file to change database paths or API URLs.
 
 - **Keyboard:**
   - `Tab`: Switch between tool tabs.
+  - `Ctrl+F`: Open global search palette.
+  - `Ctrl+C`: Intercepted by some tools for clipboard operations (e.g., copying results). Use `Esc` or `q` to exit tools where applicable.
   - **Arrow Keys, Enter, etc.:** Used for interacting with the currently selected tool.
 - **Mouse / Touchpad:**
   - **Click / Tap:** Select a tab to switch to that tool.
