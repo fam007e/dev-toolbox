@@ -27,10 +27,8 @@ impl Secrets {
         }
 
         // 3. Optional opt-in: Try .env in current directory
-        if allow_cwd {
-            if std::path::Path::new(".env").exists() {
-                dotenvy::from_filename(".env").ok();
-            }
+        if allow_cwd && std::path::Path::new(".env").exists() {
+            dotenvy::from_filename(".env").ok();
         }
 
         // 4. Load from environment (populated by the above or set manually)

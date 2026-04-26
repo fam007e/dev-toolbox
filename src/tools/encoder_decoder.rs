@@ -43,6 +43,12 @@ pub struct EncoderDecoderTool {
     result: Option<Result<String, String>>,
 }
 
+impl Default for EncoderDecoderTool {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl EncoderDecoderTool {
     pub fn new() -> Self {
         EncoderDecoderTool {

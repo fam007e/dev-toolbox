@@ -20,13 +20,15 @@ pub use repo_explorer::RepoExplorerTool;
 pub use token_inspector::TokenInspectorTool;
 pub use unicode_inspector::UnicodeInspectorTool;
 
+pub type ToolFuture<'a> = Pin<Box<dyn Future<Output = Result<String, Box<dyn Error>>> + Send + 'a>>;
+
 pub trait Tool: Send + Sync {
     fn name(&self) -> &'static str;
     fn render(&self, f: &mut Frame, area: Rect);
     fn handle_input(
         &mut self,
         key: KeyEvent,
-    ) -> Pin<Box<dyn Future<Output = Result<String, Box<dyn Error>>> + Send + '_>>;
+    ) -> ToolFuture<'_>;
 
     fn as_persistable(&self) -> Option<&dyn Persistable> {
         None

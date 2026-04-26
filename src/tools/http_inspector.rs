@@ -147,7 +147,7 @@ impl super::Tool for HttpRequestInspectorTool {
 
         let mut res_lines = vec![];
         if let Some(status) = self.status {
-            let color = if status >= 200 && status < 300 {
+            let color = if (200..300).contains(&status) {
                 Color::Green
             } else {
                 Color::Red

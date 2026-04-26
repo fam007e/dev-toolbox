@@ -174,11 +174,9 @@ impl App {
                             KeyCode::Up => {
                                 self.search_selected = self.search_selected.saturating_sub(1);
                             }
-                            KeyCode::Down => {
-                                if !self.search_results.is_empty() {
-                                    self.search_selected = (self.search_selected + 1)
-                                        .min(self.search_results.len().saturating_sub(1));
-                                }
+                            KeyCode::Down if !self.search_results.is_empty() => {
+                                self.search_selected = (self.search_selected + 1)
+                                    .min(self.search_results.len().saturating_sub(1));
                             }
                             KeyCode::Char(c)
                                 if !key
@@ -243,11 +241,11 @@ impl App {
                         }
                     }
                 }
-                Event::Mouse(mouse) => {
-                    if mouse.kind == MouseEventKind::Down(MouseButton::Left) && mouse.row == 1 {
-                        let tab_width = terminal.size()?.width / self.tools.len() as u16;
-                        self.tab_index = (mouse.column / tab_width) as usize;
-                    }
+                Event::Mouse(mouse)
+                    if mouse.kind == MouseEventKind::Down(MouseButton::Left) && mouse.row == 1 =>
+                {
+                    let tab_width = terminal.size()?.width / self.tools.len() as u16;
+                    self.tab_index = (mouse.column / tab_width) as usize;
                 }
                 _ => {}
             }
