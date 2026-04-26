@@ -3,9 +3,6 @@ use ratatui::{
     prelude::*,
     widgets::{Block, Borders, Paragraph},
 };
-use std::error::Error;
-use std::future::Future;
-use std::pin::Pin;
 
 use base64::{engine::general_purpose::STANDARD as b64, Engine as _};
 use hex;
@@ -147,10 +144,7 @@ impl super::Tool for EncoderDecoderTool {
         f.render_widget(result_para, chunks[2]);
     }
 
-    fn handle_input(
-        &mut self,
-        key: KeyEvent,
-    ) -> Pin<Box<dyn Future<Output = Result<String, Box<dyn Error>>> + Send + '_>> {
+    fn handle_input(&mut self, key: KeyEvent) -> crate::tools::ToolFuture<'_> {
         Box::pin(async move {
             match key.code {
                 KeyCode::Char('m') if key.modifiers.contains(KeyModifiers::CONTROL) => {

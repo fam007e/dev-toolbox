@@ -90,9 +90,6 @@ impl RepoExplorerTool {
     }
 }
 
-use std::future::Future;
-use std::pin::Pin;
-
 impl super::Tool for RepoExplorerTool {
     fn name(&self) -> &'static str {
         "Repo Explorer"
@@ -159,10 +156,7 @@ impl super::Tool for RepoExplorerTool {
         f.render_widget(results, chunks[results_idx]);
     }
 
-    fn handle_input(
-        &mut self,
-        key: KeyEvent,
-    ) -> Pin<Box<dyn Future<Output = Result<String, Box<dyn Error>>> + Send + '_>> {
+    fn handle_input(&mut self, key: KeyEvent) -> crate::tools::ToolFuture<'_> {
         Box::pin(async move {
             match key.code {
                 KeyCode::Enter => self.fetch_repos().await,

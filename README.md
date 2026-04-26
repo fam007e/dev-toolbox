@@ -69,10 +69,11 @@ You can modify this file to change database paths or API URLs.
 ## Navigation
 
 - **Keyboard:**
-  - `Tab`: Switch between tool tabs.
-  - `Ctrl+F`: Open global search palette.
-  - `Ctrl+C`: Intercepted by some tools for clipboard operations (e.g., copying results). Use `Esc` or `q` to exit tools where applicable.
-  - **Arrow Keys, Enter, etc.:** Used for interacting with the currently selected tool.
+   - `Tab`: Switch between tool tabs.
+   - `Ctrl+F`: Open global search palette.
+   - `Ctrl+Q`: Quit the application.
+   - `Ctrl+C`: Copy the current status message (bottom left) to the clipboard.
+   - **Arrow Keys, Enter, etc.:** Used for interacting with the currently selected tool.
 - **Mouse / Touchpad:**
   - **Click / Tap:** Select a tab to switch to that tool.
 
