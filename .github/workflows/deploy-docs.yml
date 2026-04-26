@@ -40,8 +40,8 @@ jobs:
 
       - name: Prepare docs
         run: |
-          # Copy files and fix links (remove docs/ prefix because they are now in the docs folder)
-          sed 's|docs/||g' README.md > docs/introduction.md
+          # Copy files and fix links, and remove the redundant "View Online Documentation" link
+          sed 's|docs/||g' README.md | grep -v "View Online Documentation" > docs/introduction.md
           cp CONTRIBUTING.md docs/CONTRIBUTING.md
           cp SECURITY.md docs/SECURITY.md
           cp CHANGELOG.md docs/CHANGELOG.md
