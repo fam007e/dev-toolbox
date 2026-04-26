@@ -1,0 +1,10 @@
+[book]
+authors = ["fam007e"]
+language = "en"
+multilingual = false
+src = "docs"
+title = "Dev-Toolbox Documentation"
+
+[output.html]
+git-repository-url = "https://github.com/fam007e/dev-toolbox"
+edit-url-template = "https://github.com/fam007e/dev-toolbox/edit/main/docs/{path}"
