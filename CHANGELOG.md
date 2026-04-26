@@ -23,6 +23,11 @@ All notable changes to this project will be documented in this file.
  - **Optimized Response Handling**: Added 10,000-character truncation to HTTP bodies for memory and rendering efficiency.
  - **Dependency Pruning**: Leaner `Tokio` feature set to reduce binary size and compilation time.
  
+ ### Documentation & DX
+ - **Documentation Site**: Automated `mdBook` deployment to GitHub Pages via CI.
+ - **Shortcut Audit**: Synchronized and documented all global and tool-specific keyboard navigation.
+ - **Architectural Cleanup**: Simplified tool implementation using the unified `ToolFuture` type alias.
+ 
  ## [v2026.02.28] - 2026-02-28
 
 ### Features
