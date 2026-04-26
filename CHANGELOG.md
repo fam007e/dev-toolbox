@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v2026.04.26] - 2026-04-26
+## [v2026.4.26] - 2026-04-26
  
  ### Features (Phase 3)
  - **Global Search Palette**: Integrated `Ctrl+F` search interface for instant navigation between tools.
