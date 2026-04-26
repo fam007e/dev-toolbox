@@ -8,6 +8,10 @@ Explore repositories owned by a specific GitHub user.
 2. **Fetch Data:** Press **Enter** to retrieve a list of public repositories.
 
 The tool displays repository details and automatically fetches the **latest 5 releases** for each repository (if available).
+ 
+ ## Security Note
+ 
+ This tool automatically validates the scopes of your configured GitHub token. If broad permissions (like `repo`) are detected, a warning will be displayed recommending the use of fine-grained, read-only tokens for better security.
 
 ## Keybindings
 

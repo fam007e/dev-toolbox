@@ -10,6 +10,10 @@ Gather and search for GitHub organizations.
 4. **Fetch Data:** Press **Enter** to perform the search via the GitHub API.
 
 The tool will display a list of organizations matching your criteria.
+ 
+ ## Security Note
+ 
+ This tool automatically validates the scopes of your configured GitHub token. If broad permissions (like `repo`) are detected, a warning will be displayed recommending the use of fine-grained, read-only tokens for better security.
 
 ## Keybindings
 

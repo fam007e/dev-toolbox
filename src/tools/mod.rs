@@ -25,10 +25,7 @@ pub type ToolFuture<'a> = Pin<Box<dyn Future<Output = Result<String, Box<dyn Err
 pub trait Tool: Send + Sync {
     fn name(&self) -> &'static str;
     fn render(&self, f: &mut Frame, area: Rect);
-    fn handle_input(
-        &mut self,
-        key: KeyEvent,
-    ) -> ToolFuture<'_>;
+    fn handle_input(&mut self, key: KeyEvent) -> ToolFuture<'_>;
 
     fn as_persistable(&self) -> Option<&dyn Persistable> {
         None

@@ -15,6 +15,7 @@ This project employs several security-focused Rust crates to protect sensitive i
 - **`secrecy`**: Used to wrap sensitive tokens (like GitHub API tokens) to prevent accidental logging or exposure.
 - **`zeroize`**: Ensures that sensitive data is securely wiped from memory when it is no longer needed.
 - **`https-only`**: All networking through `reqwest` is configured to enforce HTTPS.
+- **Token Scope Inspection**: Integrated validation of GitHub token scopes (`x-oauth-scopes`) to warn users when broad or dangerous permissions (e.g., full `repo` access) are detected.
 
 ## Credentials
 
