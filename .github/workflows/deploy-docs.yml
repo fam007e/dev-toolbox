@@ -48,7 +48,7 @@ jobs:
           cp CODE_OF_CONDUCT.md docs/CODE_OF_CONDUCT.md
 
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
       - name: Build with mdBook
         run: mdbook build
